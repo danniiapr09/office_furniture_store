@@ -1,31 +1,37 @@
 # Gunakan base image PHP + Apache
 FROM php:8.2-apache
 
-# Install dependencies
+# Set working directory
+WORKDIR /var/www/html
+
+# Install dependencies yang dibutuhkan (libpq-dev untuk PostgreSQL)
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     unzip \
     git \
-    # Hapus baris 'RUN docker-php-ext-install pdo pdo_mysql' yang terpisah dan gabungkan di sini
-    && docker-php-ext-install pdo pdo_pgsql
-
-# Tambahkan instalasi pdo_mysql (jika sewaktu-waktu Anda kembali menggunakan MySQL)
-RUN docker-php-ext-install pdo_mysql
+    # Clean up APT cache to keep image small
+    && rm -rf /var/lib/apt/lists/* \
+    && docker-php-ext-install pdo pdo_pgsql pdo_mysql
 
 # Aktifkan rewrite module untuk Laravel routes
 RUN a2enmod rewrite
 
-# Set working directory
-WORKDIR /var/www/html
-
-# Copy semua file project ke dalam container
-COPY . .
-
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Install dependency Laravel
+# Copy composer files untuk memaksimalkan Docker Caching
+COPY composer.json composer.lock ./
+
+# Install dependency Laravel (Layer ini akan di-cache jika composer.json tidak berubah)
 RUN composer install --no-dev --optimize-autoloader
+
+# Copy sisa file project ke dalam container
+COPY . .
+
+# SOLUSI FIX APACHE: Gunakan Symlink untuk mengarahkan root ke folder public
+# Ini mengatasi error AH01276 (Cannot serve directory)
+RUN rm -rf /var/www/html
+RUN ln -sf /var/www/html/public /var/www/html
 
 # Set permission storage & bootstrap
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
@@ -33,6 +39,6 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Expose port
 EXPOSE 80
 
-# Jalankan Migrasi dan kemudian Jalankan Laravel menggunakan Apache
-# Gunakan /bin/bash -c untuk menjalankan dua perintah berurutan
+# START COMMAND: Jalankan Migrasi terlebih dahulu, lalu jalankan Apache
+# Ini menggabungkan Fix Migrasi dan Start Server
 CMD ["/bin/bash", "-c", "php artisan migrate --force && apache2-foreground"]
