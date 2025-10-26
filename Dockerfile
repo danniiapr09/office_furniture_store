@@ -6,7 +6,11 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     unzip \
     git \
+    # Hapus baris 'RUN docker-php-ext-install pdo pdo_mysql' yang terpisah dan gabungkan di sini
     && docker-php-ext-install pdo pdo_pgsql
+
+# Tambahkan instalasi pdo_mysql (jika sewaktu-waktu Anda kembali menggunakan MySQL)
+RUN docker-php-ext-install pdo_mysql
 
 # Aktifkan rewrite module untuk Laravel routes
 RUN a2enmod rewrite
@@ -29,7 +33,6 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Expose port
 EXPOSE 80
 
-# Jalankan Laravel menggunakan Apache
-CMD ["apache2-foreground"]
-
-RUN docker-php-ext-install pdo pdo_mysql
+# Jalankan Migrasi dan kemudian Jalankan Laravel menggunakan Apache
+# Gunakan /bin/bash -c untuk menjalankan dua perintah berurutan
+CMD ["/bin/bash", "-c", "php artisan migrate --force && apache2-foreground"]
