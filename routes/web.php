@@ -1,10 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Mail;
-use App\Mail\TestMail;
+use Illuminate\Support\Facades\Artisan;
 
-Route::get('/send-test-mail', function () {
-    // Ganti dengan email yang Anda gunakan untuk register (dani09@gmail.com)
-    Mail::to('dani09@gmail.com')->send(new TestMail());
-    return 'Test email sent (hopefully) to Mailtrap!';
+Route::get('/run-migrate', function () {
+    Artisan::call('migrate', ['--force' => true]);
+    return '✅ Migration berhasil dijalankan!';
 });
