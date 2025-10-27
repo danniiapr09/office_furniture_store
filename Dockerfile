@@ -1,50 +1,31 @@
 # Gunakan base image PHP dengan Apache
 FROM php:8.2-apache
 
-# Set working directory di dalam container
+# Set working directory
 WORKDIR /var/www/html
 
-# Install dependencies sistem yang dibutuhkan Laravel
+# Install dependencies Laravel
 RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    zip \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    libpq-dev \
-    && docker-php-ext-install pdo pdo_mysql pdo_pgsql zip gd
+    git unzip libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev zip curl \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Copy file composer dari official image Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# Copy semua file project ke dalam container
-COPY . .
-
-# Install dependensi Laravel (pastikan artisan sudah tersedia)
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# Ganti permission storage dan bootstrap/cache
-RUN chmod -R 777 storage bootstrap/cache
-
-# Aktifkan mod_rewrite untuk Laravel routing
+# Aktifkan mod_rewrite untuk Laravel route
 RUN a2enmod rewrite
 
-# Salin konfigurasi Apache untuk Laravel
-RUN echo '<Directory /var/www/html>\n\
-    AllowOverride All\n\
-</Directory>' > /etc/apache2/conf-available/laravel.conf \
-    && a2enconf laravel
+# Copy semua file proyek Laravel ke container
+COPY . /var/www/html
 
-# Set environment variable untuk production
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-ENV APP_ENV=production
-ENV APP_DEBUG=false
+# Set permission agar Laravel bisa menulis log dan cache
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage \
+    && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Expose port default Apache
+# Ubah konfigurasi Apache agar root-nya ke folder "public"
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf \
+    && echo "<Directory /var/www/html/public>\n\tAllowOverride All\n\tRequire all granted\n</Directory>" >> /etc/apache2/apache2.conf
+
+# Port default Apache
 EXPOSE 80
 
-# Jalankan Apache di foreground
+# Jalankan Apache
 CMD ["apache2-foreground"]
