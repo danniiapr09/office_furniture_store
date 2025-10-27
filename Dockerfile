@@ -1,46 +1,42 @@
-# Gunakan base image PHP 8.2 dengan Apache
+# Gunakan image PHP + Apache
 FROM php:8.2-apache
 
-# Set direktori kerja
+# Set working directory
 WORKDIR /var/www/html
 
-# Install dependensi yang dibutuhkan Laravel
+# Install dependencies Laravel
 RUN apt-get update && apt-get install -y \
-    git unzip zip curl \
-    libpng-dev libjpeg-dev libfreetype6-dev \
-    libonig-dev libxml2-dev \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+    git \
+    curl \
+    zip \
+    unzip \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Copy Composer dari official image
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# Copy semua file project Laravel ke container
-COPY . .
-
-# Install dependensi Laravel tanpa dev packages
-RUN composer install --no-dev --optimize-autoloader
-
-# Generate APP_KEY & bersihkan cache Laravel
-RUN php artisan key:generate --force && \
-    php artisan config:clear && \
-    php artisan cache:clear && \
-    php artisan route:clear && \
-    php artisan view:clear
-
-# Aktifkan mod_rewrite untuk Apache (agar route Laravel bisa jalan)
+# Enable Apache mod_rewrite untuk routing Laravel
 RUN a2enmod rewrite
 
-# Set permission untuk folder Laravel
-RUN chown -R www-data:www-data /var/www/html && \
-    chmod -R 755 /var/www/html/storage && \
-    chmod -R 755 /var/www/html/bootstrap/cache
+# Copy composer dari official image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Ubah document root ke folder /public milik Laravel
-RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf && \
-    echo "<Directory /var/www/html/public>\n\tAllowOverride All\n\tRequire all granted\n</Directory>" >> /etc/apache2/apache2.conf
+# Copy seluruh file project ke container
+COPY . .
 
-# Buka port 80 untuk Railway
+# Install dependencies Laravel
+RUN composer install --no-dev --optimize-autoloader
+
+# Set permission agar storage dan bootstrap cache bisa diakses
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Set Apache document root ke folder public
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+
+# Expose port 80
 EXPOSE 80
 
-# Jalankan Apache
-CMD ["apache2-foreground"]
+# Jalankan Laravel command saat container start
+CMD php artisan migrate --force && apache2-foreground
