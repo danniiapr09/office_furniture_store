@@ -10,16 +10,11 @@ class Furniture extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title',
-        'description',
-        'price',
-        'category_id',
-        'image',
+        'nama',
+        'kategori',
+        'harga',
+        'stok',
+        'deskripsi',
+        'image'
     ];
-
-    // Relasi ke kategori (optional)
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
-    }
 }
