@@ -9,13 +9,14 @@ use App\Http\Controllers\Api\FurnitureController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::get('/furnitures', [FurnitureController::class, 'index']);
-Route::get('/furnitures/category/{id}', [FurnitureController::class, 'byCategory']);
-Route::get('/furniture/search', [FurnitureController::class, 'search']);
-Route::get('/furniture/simple-search', [FurnitureController::class, 'simpleSearch']);
+// Endpoint khusus admin
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::post('/furniture', [FurnitureController::class, 'store']);
+    Route::put('/furniture/{id}', [FurnitureController::class, 'update']);
+    Route::delete('/furniture/{id}', [FurnitureController::class, 'destroy']);
+});
 
-Route::get('/categories', [CategoryController::class, 'index']);
-
+// Endpoint khusus user
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user-profile', [AuthController::class, 'profile']);
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);

@@ -7,7 +7,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php', // ✅ tambahkan ini biar route API aktif
+        api: __DIR__.'/../routes/api.php', // ✅ route API
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -19,7 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
-        // ✅ jika perlu, biarkan CSRF hanya skip di route tertentu
+        // ✅ alias middleware custom
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        ]);
+
+        // ✅ pengecualian CSRF untuk route tertentu
         $middleware->validateCsrfTokens(except: [
             '/api/auth/register',
             '/api/auth/login',
