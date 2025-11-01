@@ -6,27 +6,55 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Furniture;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\QueryException;
 
 class FurnitureController extends Controller
 {
-    // ✅ Ambil semua data
+    /**
+     * ✅ Ambil semua data furniture
+     */
     public function index()
     {
-        $furnitures = Furniture::all();
-        return response()->json($furnitures);
+        try {
+            $furnitures = Furniture::all();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Daftar semua furniture',
+                'data' => $furnitures
+            ], 200);
+        } catch (QueryException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data furniture',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    // ✅ Ambil data berdasarkan ID
+    /**
+     * ✅ Ambil data furniture berdasarkan ID
+     */
     public function show($id)
     {
         $furniture = Furniture::find($id);
+
         if (!$furniture) {
-            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Data furniture tidak ditemukan'
+            ], 404);
         }
-        return response()->json($furniture);
+
+        return response()->json([
+            'success' => true,
+            'data' => $furniture
+        ]);
     }
 
-    // ✅ Tambah data furniture baru
+    /**
+     * ✅ Tambah data furniture baru
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -39,24 +67,30 @@ class FurnitureController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('furniture', 'public');
-            $validated['image'] = $path;
+            $validated['image'] = $request->file('image')->store('furniture', 'public');
         }
 
         $furniture = Furniture::create($validated);
 
         return response()->json([
+            'success' => true,
             'message' => 'Data furniture berhasil ditambahkan!',
             'data' => $furniture
         ], 201);
     }
 
-    // ✅ Update data furniture
+    /**
+     * ✅ Update data furniture
+     */
     public function update(Request $request, $id)
     {
         $furniture = Furniture::find($id);
+
         if (!$furniture) {
-            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Data furniture tidak ditemukan'
+            ], 404);
         }
 
         $validated = $request->validate([
@@ -68,37 +102,46 @@ class FurnitureController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // Hapus gambar lama & upload baru jika ada file baru
+        // Ganti gambar jika ada file baru
         if ($request->hasFile('image')) {
-            if ($furniture->image) {
+            if ($furniture->image && Storage::disk('public')->exists($furniture->image)) {
                 Storage::disk('public')->delete($furniture->image);
             }
-            $path = $request->file('image')->store('furniture', 'public');
-            $validated['image'] = $path;
+            $validated['image'] = $request->file('image')->store('furniture', 'public');
         }
 
         $furniture->update($validated);
 
         return response()->json([
+            'success' => true,
             'message' => 'Data furniture berhasil diupdate!',
             'data' => $furniture
         ]);
     }
 
-    // ✅ Hapus data furniture
+    /**
+     * ✅ Hapus data furniture
+     */
     public function destroy($id)
     {
         $furniture = Furniture::find($id);
+
         if (!$furniture) {
-            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Data furniture tidak ditemukan'
+            ], 404);
         }
 
-        if ($furniture->image) {
+        if ($furniture->image && Storage::disk('public')->exists($furniture->image)) {
             Storage::disk('public')->delete($furniture->image);
         }
 
         $furniture->delete();
 
-        return response()->json(['message' => 'Data furniture berhasil dihapus!']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Data furniture berhasil dihapus!'
+        ]);
     }
 }

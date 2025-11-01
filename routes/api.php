@@ -11,9 +11,12 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Endpoint khusus admin
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-    Route::post('/furniture', [FurnitureController::class, 'store']);
-    Route::put('/furniture/{id}', [FurnitureController::class, 'update']);
-    Route::delete('/furniture/{id}', [FurnitureController::class, 'destroy']);
+    // Furniture
+    Route::get('/furniture', [FurnitureController::class, 'index']); // ambil semua data
+    Route::get('/furniture/{id}', [FurnitureController::class, 'show']); // ambil by id
+    Route::post('/furniture', [FurnitureController::class, 'store']); // tambah
+    Route::put('/furniture/{id}', [FurnitureController::class, 'update']); // edit
+    Route::delete('/furniture/{id}', [FurnitureController::class, 'destroy']); // hapus
 });
 
 // Endpoint khusus user
