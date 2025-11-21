@@ -9,42 +9,25 @@ use App\Http\Controllers\Api\FurnitureController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Endpoint khusus admin
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-    // Furniture
-    Route::get('/furniture', [FurnitureController::class, 'index']); // ambil semua data
-    Route::get('/furniture/{id}', [FurnitureController::class, 'show']); // ambil by id
-    Route::post('/furniture', [FurnitureController::class, 'store']); // tambah
-    Route::put('/furniture/{id}', [FurnitureController::class, 'update']); // edit
-    Route::delete('/furniture/{id}', [FurnitureController::class, 'destroy']); // hapus
-});
-
-// Endpoint khusus user
+// USER API (mobile)
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Profile
     Route::get('/user-profile', [AuthController::class, 'profile']);
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
-
-    Route::get('/user', fn(Request $request) => $request->user());
-    Route::put('/user/update', function (Request $request) {
-        $user = $request->user();
-        $user->update($request->only('name', 'phone'));
-        return response()->json($user);
-    });
-
-    // ✅ Ganti ke AuthController atau hapus
     Route::post('/user/upload-photo', [AuthController::class, 'uploadPhoto']);
 
-    Route::post('/furniture', [FurnitureController::class, 'store']);
-    Route::put('/furniture/{furniture}', [FurnitureController::class, 'update']);
-    Route::delete('/furniture/{furniture}', [FurnitureController::class, 'destroy']);
+    // Furniture (READ ONLY)
+    Route::get('/furniture', [FurnitureController::class, 'index']);
+    Route::get('/furniture/{id}', [FurnitureController::class, 'show']);
 
-    Route::get('/categories/{category}', [CategoryController::class, 'show']);
-    Route::post('/categories', [CategoryController::class, 'store']);
-    Route::put('/categories/{category}', [CategoryController::class, 'update']);
-    Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+    // Categories (READ ONLY)
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/{id}', [CategoryController::class, 'show']);
 
-Route::get('/ping', function () {
-    return response()->json(['message' => 'API connected ✅']);
-});
+    // Ping test
+    Route::get('/ping', function () {
+        return response()->json(['message' => 'API connected ✅']);
+    });
 });
