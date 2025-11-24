@@ -14,6 +14,9 @@ Route::middleware(['web', 'admin'])->group(function () {
     Route::get('/admin/dashboard', function () {
         return view('admin.dashboard'); // nanti kita buat blade-nya
     })->name('admin.dashboard');
+    Route::get('/admin/furniture', function () {
+        return view('admin.furniture.index');
+    })->name('admin.furniture');
 
     // Logout Admin
     Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
