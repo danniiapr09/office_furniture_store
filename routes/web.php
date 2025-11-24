@@ -20,7 +20,7 @@ Route::middleware(['web', 'admin'])->group(function () {
         return view('admin.furniture.index');
     })->name('admin.furniture');
     // tabel users
-    Route::get('/admin/users', function() {
+    Route::get('/admin/users', function () {
         return view('admin.users.index');
     })->name('admin.users');
     Route::get('/admin/users/list', [UserController::class,'index']); // ajax data
