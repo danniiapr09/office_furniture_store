@@ -8,10 +8,11 @@
     <style>
         /* Palet Warna & Background */
         :root {
-            --primary-color: #007bff; /* Biru Primer */
-            --background-color: #e9ecef; /* Abu-abu muda yang lembut */
-            --card-color: #ffffff; /* Putih untuk kotak login */
-            --shadow-color: rgba(0, 0, 0, 0.15);
+            --primary-color: #FAA33C; /* Warna Orange Konsisten */
+            --primary-hover: #E38D2F; /* Sedikit lebih gelap untuk hover */
+            --background-color: #f7f7f7; /* Latar belakang sangat lembut */
+            --card-color: #ffffff;
+            --shadow-color: rgba(0, 0, 0, 0.1);
         }
         body {
             background-color: var(--background-color);
@@ -19,56 +20,75 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         
-        /* Kotak Login Baru */
+        /* Kotak Login */
         .login-box {
             max-width: 400px;
             padding: 35px;
             background: var(--card-color);
-            border-radius: 12px;
-            box-shadow: 0 8px 25px var(--shadow-color); /* Bayangan lebih tebal dan dalam */
+            border-radius: 15px; /* Lebih bulat */
+            box-shadow: 0 10px 30px var(--shadow-color); /* Bayangan yang halus */
+            border-top: 5px solid var(--primary-color); /* Garis atas oranye */
         }
 
         /* Header / Judul */
         .login-box h3 {
-            font-weight: 700;
-            color: #343a40; /* Teks lebih gelap */
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 10px;
+            font-weight: 800; /* Lebih tebal */
+            color: #343a40; 
             margin-bottom: 30px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-box h3 svg {
+            margin-right: 10px;
+            color: var(--primary-color);
         }
 
         /* Form Control Styling */
+        .form-label {
+            font-weight: 500;
+        }
         .form-control {
             border-radius: 8px;
-            padding: 10px 15px;
-            border-color: #ced4da;
+            padding: 12px 15px; /* Padding lebih besar */
+            border: 1px solid #dee2e6;
         }
         .form-control:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+            box-shadow: 0 0 0 0.25rem rgba(250, 163, 60, 0.25); /* Shadow fokus oranye */
         }
         
-        /* Tombol */
+        /* Tombol Login (Orange) */
         .btn-primary {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
-            font-weight: 600;
-            padding: 10px;
+            font-weight: 700;
+            padding: 10px 15px;
             border-radius: 8px;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.1s;
         }
         .btn-primary:hover {
-            background-color: #0056b3; /* Warna hover sedikit lebih gelap */
-            border-color: #0056b3;
+            background-color: var(--primary-hover); 
+            border-color: var(--primary-hover);
+            transform: translateY(-1px); /* Efek slight lift pada hover */
         }
     </style>
 </head>
 <body>
 
 <div class="login-box">
-    <h3 class="text-center">Admin Panel Login</h3>
+    {{-- Header dengan Icon --}}
+    <h3 class="text-center">
+        {{-- Icon untuk Admin/Dashboard --}}
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+          <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+          <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+        </svg>
+        Admin Panel Login
+    </h3>
 
     {{-- Pesan Error Laravel Blade --}}
     @if ($errors->any())
@@ -90,12 +110,9 @@
             <input type="password" id="password" name="password" class="form-control" required>
         </div>
 
+        {{-- Tombol Login --}}
         <button type="submit" class="btn btn-primary w-100">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-right me-2" viewBox="0 0 16 16">
-              <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
-              <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
-            </svg>
-            MASUK KE DASHBOARD
+            LOGIN
         </button>
     </form>
 </div>
