@@ -20,7 +20,9 @@ Route::middleware(['web', 'admin'])->group(function () {
         return view('admin.furniture.index');
     })->name('admin.furniture');
     // tabel users
-    Route::get('/admin/users', fn()=> view('admin.users.index'))->name('admin.users');
+    Route::get('/admin/users', function() {
+        return view('admin.users.index');
+    })->name('admin.users');
     Route::get('/admin/users/list', [UserController::class,'index']); // ajax data
     Route::get('/admin/users/{id}', [UserController::class,'show']); // detail
     Route::post('/admin/users/{id}', [UserController::class,'update']); // _method=PUT
