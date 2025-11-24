@@ -1,19 +1,21 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
 
-Route::prefix('admin')->group(function () {
+// Halaman Login Admin
+Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
 
-    // Login form
-    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])
-        ->name('admin.login');
+// Hanya admin yang sudah login
+Route::middleware(['web', 'admin'])->group(function () {
 
-    // Process login
-    Route::post('/login', [AdminAuthController::class, 'login'])
-        ->name('admin.login.submit');
+    // Dashboard Admin
+    Route::get('/admin/dashboard', function () {
+        return view('admin.dashboard'); // nanti kita buat blade-nya
+    })->name('admin.dashboard');
 
-    // Logout
-    Route::post('/logout', [AdminAuthController::class, 'logout'])
-        ->name('admin.logout');
+    // Logout Admin
+    Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
 });
