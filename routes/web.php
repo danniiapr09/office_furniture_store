@@ -8,40 +8,40 @@ use App\Http\Controllers\Admin\UserController;
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
 
-// Hanya admin yang sudah login
+// Semua route di bawah ini hanya bisa diakses admin yang sudah login
 Route::middleware(['web', 'admin'])->group(function () {
 
     // Dashboard Admin
     Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard'); // nanti kita buat blade-nya
+        return view('admin.dashboard');
     })->name('admin.dashboard');
-    // Tabel furniture
+
+    // Furniture Management
     Route::get('/admin/furniture', function () {
         return view('admin.furniture.index');
-    })->name('admin.furniture');
-    // // tabel users
+    })->name('admin.furniture.index');
+
+    // User Management
     Route::prefix('/admin/users')->name('admin.users.')->group(function () {
-        
-        // Rute: /admin/users (menampilkan halaman)
+
+        // Menampilkan halaman user
         Route::get('/', function () {
             return view('admin.users.index');
-        })->name('index'); // nama rute: admin.users.index
-        
-        // Rute: /admin/users/list (ajax data)
-        Route::get('/list', [UserController::class, 'index']);
-        
-        // Rute: /admin/users/{id} (detail)
-        Route::get('/{id}', [UserController::class, 'show']); 
-        
-        // Rute: POST /admin/users/{id} (untuk Update dengan _method=PUT)
-        Route::post('/{id}', [UserController::class, 'update']);
-        
-        // Rute: DELETE /admin/users/{id} (Delete)
-        Route::delete('/{id}', [UserController::class, 'destroy']);
-        
+        })->name('index');
+
+        // Ajax list user
+        Route::get('/list', [UserController::class, 'index'])->name('list');
+
+        // Detail user
+        Route::get('/{id}', [UserController::class, 'show'])->name('show');
+
+        // Update user (_method=PUT via POST)
+        Route::post('/{id}', [UserController::class, 'update'])->name('update');
+
+        // Delete user
+        Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
     });
 
     // Logout Admin
     Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
-
 });
