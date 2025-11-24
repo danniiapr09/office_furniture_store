@@ -7,24 +7,36 @@ use Illuminate\Foundation\Configuration\Middleware;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php', // ✅ route API
+        api: __DIR__.'/../routes/api.php', // route API
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // ✅ aktifkan API dan Sanctum middleware
+
+        // === SANCTUM & API ===
         $middleware->statefulApi();
 
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
-        // ✅ alias middleware custom
+        // === CORS ENABLE ===
+        $middleware->cors([
+            'paths' => ['api/*', 'sanctum/csrf-cookie'],
+            'allowed_methods' => ['*'],
+            'allowed_origins' => ['*'],  // sementara bebas dulu
+            'allowed_headers' => ['*'],
+            'exposed_headers' => [],
+            'max_age' => 0,
+            'supports_credentials' => true,
+        ]);
+
+        // === ALIAS MIDDLEWARE ===
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
 
-        // ✅ pengecualian CSRF untuk route tertentu
+        // === CSRF EXCEPTIONS ===
         $middleware->validateCsrfTokens(except: [
             '/api/auth/register',
             '/api/auth/login',
