@@ -13,23 +13,24 @@ class FurnitureController extends Controller
     /**
      * ✅ Ambil semua data furniture
      */
-    public function index()
+    public function index(Request $request)
     {
-        try {
-            $furnitures = Furniture::all();
+        $query = Furniture::with('category');
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Daftar semua furniture',
-                'data' => $furnitures
-            ], 200);
-        } catch (QueryException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil data furniture',
-                'error' => $e->getMessage()
-            ], 500);
+        // search by name
+        if($request->has('q') && $request->q){
+            $query->where('name', 'like', '%'.$request->q.'%');
         }
+
+        // optional filter by category
+        if($request->has('category') && $request->category){
+            $query->where('category_id', $request->category);
+        }
+
+        $perPage = 10;
+        $furnitures = $query->orderBy('id','desc')->paginate($perPage);
+
+        return response()->json($furnitures);
     }
 
     /**

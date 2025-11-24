@@ -24,6 +24,20 @@
     </div>
   </div>
 
+  <div class="row g-2 mb-2">
+    <div class="col-md-6">
+        <input id="searchInput" class="form-control" placeholder="Search by name..." oninput="debouncedLoad()">
+    </div>
+    <div class="col-md-3">
+        <select id="filterCategory" class="form-select" onchange="loadFurniture(1)">
+        <option value="">All Categories</option>
+        </select>
+    </div>
+    <div class="col-md-3 text-end">
+        <button class="btn btn-outline-secondary" onclick="loadFurniture()">Reload</button>
+    </div>
+  </div>
+
   <div class="card mb-3">
     <div class="card-body p-2">
       <div class="row g-2">
