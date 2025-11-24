@@ -19,8 +19,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/upload-photo', [AuthController::class, 'uploadPhoto']);
 
     // Furniture (READ ONLY)
-    Route::get('/furniture', [FurnitureController::class, 'index']);
-    Route::get('/furniture/{id}', [FurnitureController::class, 'show']);
+    Route::get('/furniture', [FurnitureController::class,'index']);
+    Route::get('/furniture/{id}', [FurnitureController::class,'show']);
+    Route::post('/furniture', [FurnitureController::class,'store']);
+    Route::post('/furniture/{id}', [FurnitureController::class,'update']);
+    Route::delete('/furniture/{id}', [FurnitureController::class,'destroy']);
 
     // Categories (READ ONLY)
     Route::get('/categories', [CategoryController::class, 'index']);
