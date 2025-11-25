@@ -35,6 +35,7 @@ class AuthController extends Controller
         ]);
 
         // Otomatis login setelah register
+        // Pastikan model User menggunakan trait HasApiTokens
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -64,13 +65,14 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
+        // Cek jika user tidak ada ATAU password salah
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'message' => 'Email atau password salah.'
             ], 401);
         }
 
-        // Hapus token lama agar cuma 1 aktif
+        // Hapus token lama agar hanya 1 token yang aktif (untuk keamanan)
         $user->tokens()->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -88,13 +90,14 @@ class AuthController extends Controller
      */
     public function profile(Request $request)
     {
+        // Data diambil melalui middleware 'auth:sanctum'
         return response()->json([
             'user' => $request->user()->only(['id', 'name', 'email', 'phone']),
         ], 200);
     }
 
     /**
-     * Update profile user
+     * Update profile user (Nama dan Telepon)
      */
     public function updateProfile(Request $request)
     {
@@ -120,11 +123,88 @@ class AuthController extends Controller
         ], 200);
     }
 
+    // --- Fungsionalitas Baru ---
+
+    /**
+     * Update Email user (membutuhkan password saat ini)
+     */
+    public function updateEmail(Request $request)
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        // Cek password saat ini
+        if (! Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'message' => 'Password saat ini salah.'
+            ], 401);
+        }
+
+        $user->email = $request->email;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Email berhasil diperbarui',
+            'user'    => $user->only(['id', 'name', 'email', 'phone']),
+        ], 200);
+    }
+    
+    /**
+     * Ganti Password user (membutuhkan password lama dan konfirmasi)
+     */
+    public function changePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'password'         => 'required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        // Cek password saat ini
+        if (! Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Password saat ini salah.'
+            ], 401);
+        }
+
+        // Update password baru
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // Opsional: Hapus semua token lama (untuk keamanan ekstra setelah ganti password)
+        $user->tokens()->delete(); 
+
+        return response()->json([
+            'message' => 'Password berhasil diubah. Mohon login ulang.'
+        ], 200);
+    }
+
+
     /**
      * Logout user (hapus token aktif)
      */
     public function logout(Request $request)
     {
+        // Menghapus token saat ini yang digunakan untuk request
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
@@ -133,12 +213,10 @@ class AuthController extends Controller
     }
 
     /**
-     * Ambil data user login (opsional)
+     * Ambil data user login (opsional) - sama dengan profile
      */
     public function user(Request $request)
     {
-        return response()->json([
-            'user' => $request->user()->only(['id', 'name', 'email', 'phone']),
-        ], 200);
+        return $this->profile($request);
     }
 }
