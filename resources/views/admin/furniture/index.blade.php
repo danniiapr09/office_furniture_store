@@ -10,21 +10,14 @@
     <style>
         :root {
             --primary-color: #FAA33C; 
-            --secondary-bg: #212529; /* Warna gelap untuk sidebar */
-            --light-bg: #f8f9fa; /* Latar belakang konten */
+            --secondary-bg: #212529;
+            --light-bg: #f8f9fa;
         }
         body {
             background-color: var(--light-bg);
             font-family: 'Inter', sans-serif;
         }
-        
-        /* Layout Grid Utama */
-        #main-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Sidebar Styling (Sama seperti Dashboard) */
+        #main-layout { display: flex; min-height: 100vh; }
         #sidebar {
             width: 250px;
             background-color: var(--secondary-bg);
@@ -52,51 +45,21 @@
             background-color: rgba(250, 163, 60, 0.1); 
             border-left-color: var(--primary-color);
         }
-        .nav-link i {
-            margin-right: 10px;
-        }
-
-        /* Content Area Styling */
-        #content-area {
-            flex-grow: 1;
-            padding: 0;
-        }
-
-        /* Top Header Styling */
+        .nav-link i { margin-right: 10px; }
+        #content-area { flex-grow: 1; padding: 0; }
         #top-header {
             background-color: white;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             padding: 15px 30px;
             border-bottom: 1px solid #e9ecef;
         }
-        .welcome-text {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #343a40;
-        }
-
-        /* Main Content Padding */
-        #main-content {
-            padding: 30px;
-        }
-        
-        /* Custom Table Styling */
-        .card {
-            border-radius: 10px;
-            border: none;
-        }
+        .welcome-text { font-size: 1.25rem; font-weight: 600; color: #343a40; }
+        #main-content { padding: 30px; }
+        .card { border-radius: 10px; border: none; }
         .table-hover > tbody > tr:hover > td, 
-        .table-hover > tbody > tr:hover > th {
-            --bs-table-bg-hover: #fff3e0; /* Hover color oranye pucat */
-        }
-        .table-bordered {
-            border-radius: 10px;
-            overflow: hidden; /* agar border radius bekerja pada thead */
-        }
-        .table thead {
-            background-color: #e9ecef;
-        }
-        
+        .table-hover > tbody > tr:hover > th { --bs-table-bg-hover: #fff3e0; }
+        .table-bordered { border-radius: 10px; overflow: hidden; }
+        .table thead { background-color: #e9ecef; }
         .btn-primary {
              background-color: var(--primary-color);
              border-color: var(--primary-color);
@@ -106,9 +69,7 @@
              background-color: #E38D2F;
              border-color: #E38D2F;
         }
-        .btn {
-            border-radius: 6px;
-        }
+        .btn { border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -122,38 +83,36 @@
         
         <ul class="nav flex-column mt-3">
             <li class="nav-item">
-                <a class="nav-link" href="/admin/dashboard">
+                <a class="nav-link" href="#">
                     <i class="bi bi-grid-fill"></i> Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link active" href="/admin/furniture">
+                <a class="nav-link active" href="#">
                     <i class="bi bi-box-seam-fill"></i> Manage Furniture
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/categories">
+                <a class="nav-link" href="#">
                     <i class="bi bi-tags-fill"></i> Manage Categories
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/orders">
+                <a class="nav-link" href="#">
                     <i class="bi bi-receipt"></i> Orders
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/users">
+                <a class="nav-link" href="#">
                     <i class="bi bi-people-fill"></i> Users
                 </a>
             </li>
             
             <li class="nav-item mt-5">
-                <form method="POST" action="{{ route('admin.logout') }}">
-                    @csrf
-                    <button class="btn btn-outline-danger w-75 ms-3">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </button>
-                </form>
+                <!-- Simulasikan tombol Logout -->
+                <button class="btn btn-outline-light w-75 ms-3" onclick="showErrorMessage('Logout logic goes here!', 'Info Log Out')">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
             </li>
         </ul>
     </div>
@@ -166,7 +125,7 @@
             </div>
             <nav aria-label="breadcrumb">
               <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-decoration-none">Home</a></li>
+                <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Home</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Furniture</li>
               </ol>
             </nav>
@@ -195,7 +154,8 @@
                         <div class="col-md-4">
                             <select id="filterCategory" class="form-select" onchange="loadFurniture(1)">
                                 <option value="">All Categories</option>
-                                </select>
+                                <!-- Opsi akan diisi oleh JS -->
+                            </select>
                         </div>
                         <div class="col-md-3 text-end">
                             <button class="btn btn-outline-secondary w-100" onclick="loadFurniture(1)">
@@ -204,6 +164,12 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Area Notifikasi Khusus (Jika 401/403 terjadi) -->
+            <div id="authAlert" class="alert alert-danger d-none" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> 
+                <strong>Akses Ditolak!</strong> Anda mungkin belum login atau ada masalah konfigurasi CORS/Sanctum di server Laravel Anda. Cek kembali setting API_BASE_URL (sekarang **http://127.0.0.1:8000**).
             </div>
 
             <div class="table-responsive">
@@ -236,7 +202,7 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title"><i class="bi bi-plus-circle-fill me-2"></i> Add New Furniture</h5>
+          <h5 class="modal-title"><i class="bi bi-plus-circle-fill me-2"></i> Tambah Furniture Baru</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -245,37 +211,37 @@
  
             <div class="row">
               <div class="col-md-8 mb-3">
-                <label class="form-label">Name</label>
+                <label class="form-label">Nama</label>
                 <input type="text" name="name" class="form-control" required>
               </div>
               <div class="col-md-4 mb-3">
-                <label class="form-label">Category</label>
+                <label class="form-label">Kategori</label>
                 <select name="category_id" class="form-select" id="addCategorySelect" required>
-                  <option value="">Loading...</option>
+                  <option value="">Memuat...</option>
                 </select>
               </div>
             </div>
  
             <div class="mb-3">
-              <label class="form-label">Price</label>
+              <label class="form-label">Harga</label>
               <input type="number" name="price" class="form-control" required>
             </div>
  
             <div class="mb-3">
-              <label class="form-label">Description</label>
+              <label class="form-label">Deskripsi</label>
               <textarea name="description" class="form-control" rows="3"></textarea>
             </div>
  
             <div class="mb-3">
-              <label class="form-label">Image</label>
+              <label class="form-label">Gambar</label>
               <input type="file" name="image" class="form-control">
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
           <button class="btn btn-primary" onclick="createFurniture()">
-            <i class="bi bi-save"></i> Save Item
+            <i class="bi bi-save"></i> Simpan Item
           </button>
         </div>
       </div>
@@ -298,29 +264,29 @@
  
             <div class="row">
               <div class="col-md-8 mb-3">
-                <label class="form-label">Name</label>
+                <label class="form-label">Nama</label>
                 <input type="text" name="name" id="edit_name" class="form-control" required>
               </div>
               <div class="col-md-4 mb-3">
-                <label class="form-label">Category</label>
+                <label class="form-label">Kategori</label>
                 <select name="category_id" class="form-select" id="editCategorySelect" required>
-                  <option value="">Loading...</option>
+                  <option value="">Memuat...</option>
                 </select>
               </div>
             </div>
  
             <div class="mb-3">
-              <label class="form-label">Price</label>
+              <label class="form-label">Harga</label>
               <input type="number" name="price" id="edit_price" class="form-control" required>
             </div>
  
             <div class="mb-3">
-              <label class="form-label">Description</label>
+              <label class="form-label">Deskripsi</label>
               <textarea name="description" id="edit_description" class="form-control" rows="3"></textarea>
             </div>
  
             <div class="mb-3">
-              <label class="form-label">Replace Image (optional)</label>
+              <label class="form-label">Ganti Gambar (opsional)</label>
               <input type="file" name="image" id="edit_image" class="form-control">
             </div>
  
@@ -328,7 +294,7 @@
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
           <button class="btn btn-primary" onclick="updateFurniture()">
             <i class="bi bi-upload"></i> Update
           </button>
@@ -349,7 +315,7 @@
                 Message content here.
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
@@ -360,15 +326,15 @@
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-question-circle-fill me-2"></i> Confirm Action</h5>
+                <h5 class="modal-title"><i class="bi bi-question-circle-fill me-2"></i> Konfirmasi Aksi</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="confirmModalBody">
-                Are you sure?
+                Apakah Anda yakin?
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmActionBtn">Yes, Proceed</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmActionBtn">Ya, Lanjutkan</button>
             </div>
         </div>
     </div>
@@ -381,129 +347,166 @@
     /* ---------------------------
     Config & helper
     ----------------------------*/
+    // GANTI URL INI dengan URL Laravel API Anda. Jika 127.0.0.1:8000 tidak bekerja, coba http://[IP_Anda_di_Jaringan_Lokal]:8000
+    const API_BASE_URL = 'http://127.0.0.1:8000'; 
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
     let currentPage = 1;
     let lastPage = 1;
-    let perPage = 10;
     let searchTimeout = null;
-    
-    // Global variable for the delete ID when using the custom confirmation modal
     let deleteIdToConfirm = null; 
 
-    // Helper functions
-    function qs(id){ return document.getElementById(id); }
-    function showError(containerId, message){ qs(containerId).innerHTML = message; }
+    // Helper DOM
+    const qs = id => document.getElementById(id);
+    const showError = (containerId, message) => { qs(containerId).innerHTML = message; };
+    const hideAuthAlert = () => qs('authAlert').classList.add('d-none');
+    const showAuthAlert = () => qs('authAlert').classList.remove('d-none');
     
+    // Formatting
+    const escapeHtml = (unsafe) => {
+        if (!unsafe) return '';
+        return unsafe.toString().replace(/[&<>"']/g, function(m) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[m];
+        });
+    };
+    const numberWithCommas = (x) => {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
     // Custom Alert replacement
-    function showErrorMessage(message) {
+    const showErrorMessage = (message, title = 'Error') => {
+        qs('messageModalTitle').innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i> ${title}`;
         qs('messageModalBody').innerHTML = escapeHtml(message);
         const modal = new bootstrap.Modal(qs('messageModal'));
         modal.show();
-    }
+    };
     
     // Custom Confirm replacement
-    function showConfirmModal(message, callback) {
+    const showConfirmModal = (message, callback) => {
         qs('confirmModalBody').innerHTML = escapeHtml(message);
         const confirmBtn = qs('confirmActionBtn');
         
-        // Clear previous event listener
-        confirmBtn.onclick = null;
-        
-        // Set new event listener
-        confirmBtn.onclick = function() {
-            // Close modal first
+        confirmBtn.onclick = () => {
             document.querySelector('#confirmModal .btn-close').click();
-            // Execute the callback function (e.g., deleteFurnitureAction)
             callback();
         };
 
         const modal = new bootstrap.Modal(qs('confirmModal'));
         modal.show();
-    }
-
+    };
 
     /* ===========================
     LOAD FURNITURE (with search & pagination)
     GET /api/furniture?page=...&q=...
     =========================== */
-    function loadFurniture(page = 1) {
+    async function loadFurniture(page = 1) {
+        hideAuthAlert();
         currentPage = page;
-        // Ambil nilai dari filter kategori
-        const categoryId = document.getElementById('filterCategory').value || '';
-        const q = encodeURIComponent(document.getElementById('searchInput').value || '');
+        const categoryId = qs('filterCategory').value || '';
+        const q = encodeURIComponent(qs('searchInput').value || '');
         
-        let url = `/api/furniture?page=${page}&q=${q}`;
+        let url = `${API_BASE_URL}/api/furniture?page=${page}&q=${q}`;
         if (categoryId) {
             url += `&category_id=${categoryId}`;
         }
+        
+        console.log(`[API CALL] Loading Furniture: ${url}`); // Logging URL yang dicoba
 
-        fetch(url, {
-            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
-            credentials: 'include'
-        })
-            .then(async res => {
-                if(!res.ok) {
-                    if (res.status === 401 || res.status === 403) {
-                         showErrorMessage('Access Denied. Please log in again.');
-                    }
-                    throw new Error('Failed to load');
-                }
-                const payload = await res.json();
+        qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm me-2"></div> Memuat...</td></tr>`;
 
-                // Accept either paginated structure or simple array
-                let items = payload.data ?? payload;
-                // when paginated
-                if(payload.meta){
-                    currentPage = payload.meta.current_page;
-                    lastPage = payload.meta.last_page;
-                } else if(payload.last_page){
-                    currentPage = payload.current_page;
-                    lastPage = payload.last_page;
-                } else {
-                    // fallback
-                    currentPage = page;
-                    lastPage = 1;
-                }
-
-                let html = '';
-                if(!items || items.length === 0){
-                    html = `<tr><td colspan="5" class="text-center">No data</td></tr>`;
-                } else {
-                    items.forEach(item => {
-                        html += `
-                            <tr id="row-${item.id}">
-                                <td>${item.id}</td>
-                                <td>${escapeHtml(item.name)}</td>
-                                <td>${escapeHtml(item.category?.name ?? '-')}</td>
-                                <td>Rp ${numberWithCommas(item.price)}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-warning me-1" onclick="openEditModal(${item.id})"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-sm btn-danger" onclick="confirmDelete(${item.id})"><i class="bi bi-trash"></i></button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-                qs('furniture-table').innerHTML = html;
-                renderPagination();
-            })
-            .catch(err=>{
-                 if (err.message !== 'Failed to load') {
-                    showErrorMessage('Network Error or API call failed: ' + err.message);
-                }
-                qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-danger text-center">Error loading data</td></tr>`;
+        try {
+            const res = await fetch(url, {
+                // KRITIS: Wajib untuk mengirim cookie session
+                credentials: 'include'
             });
+
+            if (!res.ok) {
+                console.error(`[API ERROR] Status: ${res.status}. URL: ${url}`);
+                if (res.status === 401 || res.status === 403) {
+                    showAuthAlert(); // Tampilkan notifikasi Auth Alert di UI
+                    console.warn('[AUTH ERROR] Akses Ditolak (401/403) saat memuat furniture. Cek Auth/Sanctum.');
+                    qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Akses Ditolak (401/403). Cek konfigurasi server.</td></tr>`;
+                } else {
+                    const errorText = await res.text();
+                    console.error(`[API ERROR] Response Body: ${errorText.substring(0, 300)}...`);
+                    // Coba parsing JSON, jika gagal, gunakan text
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        showErrorMessage(`Gagal memuat data. Status: ${res.status}. Pesan: ${errorJson.message || 'Error tidak diketahui'}`);
+                    } catch {
+                         showErrorMessage(`Gagal memuat data. Status: ${res.status}. Pesan: ${errorText || 'Respon non-JSON.'}`);
+                    }
+                }
+                throw new Error('Failed to load furniture data with response status: ' + res.status);
+            }
+
+            const payload = await res.json();
+            
+            // Handle Pagination structure
+            const items = payload.data ?? payload;
+            if (payload.meta) {
+                currentPage = payload.meta.current_page;
+                lastPage = payload.meta.last_page;
+            } else if (payload.last_page) {
+                currentPage = payload.current_page;
+                lastPage = payload.last_page;
+            } else {
+                currentPage = page;
+                lastPage = 1;
+            }
+
+            let html = '';
+            // Anggap per halaman 15 item (default Laravel)
+            const itemsPerPage = 15; 
+            
+            if (!items || items.length === 0) {
+                html = `<tr><td colspan="5" class="text-center">Tidak ada data</td></tr>`;
+            } else {
+                items.forEach((item, index) => {
+                    const rowNumber = (currentPage - 1) * itemsPerPage + index + 1; 
+                    html += `
+                        <tr id="row-${item.id}">
+                            <td>${rowNumber}</td>
+                            <td>${escapeHtml(item.name)}</td>
+                            <td>${escapeHtml(item.category?.name ?? '-')}</td>
+                            <td>Rp ${numberWithCommas(item.price)}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning me-1" onclick="openEditModal(${item.id})"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-danger" onclick="confirmDelete(${item.id})"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            qs('furniture-table').innerHTML = html;
+            renderPagination();
+
+        } catch (err) {
+            console.error('[FETCH ERROR] General fetch error:', err);
+            // Failed to fetch error (jaringan/koneksi ditolak)
+            if (err.message.includes('Failed to fetch')) {
+                 showErrorMessage(`Gagal terhubung ke API di ${API_BASE_URL}. Pastikan server Laravel Anda berjalan dan konfigurasi CORS/Sanctum sudah benar.`);
+            }
+            qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-danger text-center">Gagal memuat data (Jaringan/Server)</td></tr>`;
+        }
     }
 
     /* debounce loader for search input */
-    function debouncedLoad(){
+    const debouncedLoad = () => {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(()=> loadFurniture(1), 400);
-    }
+        searchTimeout = setTimeout(() => loadFurniture(1), 400);
+    };
 
     /* ===========================
     Pagination render
     =========================== */
-    function renderPagination(){
+    const renderPagination = () => {
         const ul = qs('pagination');
         ul.innerHTML = '';
         if(lastPage <= 1) return;
@@ -514,10 +517,8 @@
                     </li>`;
         };
 
-        // prev
         if(currentPage > 1) ul.innerHTML += makeItem(currentPage-1, '« Prev');
 
-        // show 1..n (simple)
         let startPage = Math.max(1, currentPage - 2);
         let endPage = Math.min(lastPage, currentPage + 2);
 
@@ -532,210 +533,270 @@
 
         if (endPage < lastPage) ul.innerHTML += makeItem(lastPage, '...'+lastPage);
 
-
-        // next
         if(currentPage < lastPage) ul.innerHTML += makeItem(currentPage+1, 'Next »');
-    }
+    };
 
     /* ===========================
     Load categories (for filter, add & edit)
     =========================== */
-    function loadCategoriesFor(selectId, selected = null){
-        fetch('/api/categories', {
-            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
-            credentials: 'include'
-        })
-            .then(res=>res.json())
-            .then(data=>{
-                let html = '<option value="">-- Select Category --</option>';
-                data.forEach(cat=>{
-                    html += `<option value="${cat.id}" ${selected && selected==cat.id ? 'selected':''}>${escapeHtml(cat.name)}</option>`;
-                });
-                qs(selectId).innerHTML = html;
+    async function loadCategoriesFor(selectId, selected = null){
+        const selectElement = qs(selectId);
+        // Pastikan tampilkan "Memuat..." sebelum fetch
+        if (selectElement.options.length === 0 || selectElement.options[0].value === "") {
+             selectElement.innerHTML = '<option value="">Memuat...</option>';
+        }
 
-                // Load filter category too
-                if (selectId === 'addCategorySelect') {
-                    const filterSelect = qs('filterCategory');
-                    if (filterSelect) {
-                        filterSelect.innerHTML = `<option value="">All Categories</option>` + html.substring(html.indexOf('>')+1);
-                    }
+        const url = `${API_BASE_URL}/api/categories`;
+        console.log(`[API CALL] Loading Categories: ${url}`); // Logging URL yang dicoba
+        try {
+            const res = await fetch(url, {
+                credentials: 'include'
+            });
+            
+            if(!res.ok) {
+                console.error(`[API ERROR] Gagal memuat kategori. Status: ${res.status}`);
+                 if (res.status === 401 || res.status === 403) {
+                    showErrorMessage('Akses Ditolak saat memuat Kategori (401/403). Anda perlu login.');
+                 }
+                throw new Error('Failed to load categories');
+            }
+
+            const data = await res.json();
+            // Cek apakah response array atau memiliki properti data (jika menggunakan resource/collection)
+            const categories = data.data ?? data;
+            
+            let html = '<option value="">-- Pilih Kategori --</option>';
+            
+            categories.forEach(cat=>{
+                html += `<option value="${cat.id}" ${selected && selected==cat.id ? 'selected':''}>${escapeHtml(cat.name)}</option>`;
+            });
+            selectElement.innerHTML = html;
+
+            // Load filter category too (hanya dilakukan sekali saat memuat untuk modal Add)
+            if (selectId === 'addCategorySelect') {
+                const filterSelect = qs('filterCategory');
+                if (filterSelect) {
+                    // Salin opsi kategori ke dropdown filter, tambahkan opsi "Semua Kategori"
+                    filterSelect.innerHTML = `<option value="">Semua Kategori</option>` + html.substring(html.indexOf('>')+1);
                 }
-            })
-            .catch(()=> qs(selectId).innerHTML = '<option value="">Error loading</option>');
+            }
+
+        } catch (err) {
+            console.error('[FETCH ERROR] Category load failed:', err);
+             if (err.message.includes('Failed to fetch')) {
+                 showErrorMessage(`Gagal terhubung ke API Kategori di ${API_BASE_URL}. Cek koneksi & CORS server.`);
+             }
+            selectElement.innerHTML = '<option value="">Error memuat</option>';
+        }
     }
-    // initial load for add form AND filter dropdown
-    loadCategoriesFor('addCategorySelect');
+
+    /* ===========================
+    Show Validation Errors
+    =========================== */
+    const showValidationErrors = (containerId, json) => {
+        let errorHtml = '';
+        if (json.errors) {
+            for (const key in json.errors) {
+                json.errors[key].forEach(msg => {
+                    errorHtml += `<div>• ${msg}</div>`;
+                });
+            }
+        } else if (json.message) {
+            errorHtml = `<div>• ${json.message}</div>`;
+        }
+        showError(containerId, errorHtml);
+    };
 
 
     /* ===========================
     CREATE FURNITURE
     =========================== */
-    function createFurniture(){
+    async function createFurniture(){
         showError('addErrors','');
         const form = qs('addFurnitureForm');
         const fd = new FormData(form);
 
-        fetch('/api/furniture', {
-            method: 'POST',
-            body: fd,
-            headers: { 'Accept': 'application/json' },
-            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
-            credentials: 'include' 
-        })
-        .then(async res=>{
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/furniture`, {
+                method: 'POST',
+                body: fd,
+                headers: { 'Accept': 'application/json' },
+                credentials: 'include' 
+            });
+
+            // Pastikan kita mencoba membaca response body bahkan jika res.ok false, 
+            // karena response body sering berisi pesan error validasi/server
             const json = await res.json();
+            
             if(!res.ok){
+                console.error(`[API ERROR] Create Furniture failed. Status: ${res.status}`);
+                if (res.status === 401 || res.status === 403) {
+                    showErrorMessage('Akses Ditolak (401/403) saat membuat item. Anda perlu login ulang.');
+                }
                 showValidationErrors('addErrors', json);
+                // Tambahkan pesan "Unauthenticated" jika status 401
+                if (res.status === 401) {
+                    showError('addErrors', '<div>• Unauthenticated. Anda harus login untuk melakukan aksi ini.</div>');
+                }
                 return;
             }
-            // close modal
+            
             document.querySelector('#addFurnitureModal .btn-close').click();
             form.reset();
-            // Load data ke halaman 1 setelah berhasil menambah
             loadFurniture(1); 
-        })
-        .catch(()=> showError('addErrors','Failed to create item'));
+
+        } catch (err) {
+            console.error('[FETCH ERROR] Create Furniture network error:', err);
+            showError('addErrors','Gagal membuat item (Kesalahan Jaringan/Server)');
+        }
     }
 
     /* ===========================
     OPEN EDIT MODAL (populate)
-    GET /api/furniture/{id}
     =========================== */
-    function openEditModal(id){
+    async function openEditModal(id){
         showError('editErrors','');
         
-        fetch(`/api/furniture/${id}`, {
-            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
-            credentials: 'include'
-        })
-            .then(async res=>{
-                if(!res.ok) {
-                    showErrorMessage('Failed to load item data. Might be unauthenticated or not found.');
-                    throw new Error('not found');
-                }
-                const item = await res.json();
-                
-                // populate categories first, passing the selected category_id
-                loadCategoriesFor('editCategorySelect', item.category_id);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/furniture/${id}`, {
+                credentials: 'include'
+            });
+            
+            if(!res.ok) {
+                 if (res.status === 401 || res.status === 403) {
+                    showErrorMessage('Akses Ditolak (401/403). Anda perlu login ulang.');
+                 }
+                showErrorMessage('Gagal memuat data item. Mungkin tidak ditemukan.');
+                return;
+            }
+            
+            const data = await res.json();
+            const item = data.data ?? data; // Handle jika menggunakan resource
 
-                qs('edit_id').value = item.id;
-                qs('edit_name').value = item.name ?? '';
-                qs('edit_price').value = item.price ?? '';
-                qs('edit_description').value = item.description ?? '';
-                
-                // show current image preview if exists
-                if(item.image_url){
-                    qs('currentImagePreview').innerHTML = `
-                    <label class="form-label">Current Image</label>
-                    <div><img src="${item.image_url}" onerror="this.onerror=null;this.src='https://placehold.co/180x180/EAEAEA/555555?text=No+Image';" style="max-width:180px;height:auto;border-radius:6px;border:1px solid #ddd;"></div>`;
-                } else {
-                    qs('currentImagePreview').innerHTML = '';
-                }
+            // Populate categories
+            loadCategoriesFor('editCategorySelect', item.category_id);
 
-                // open modal
-                const modal = new bootstrap.Modal(document.getElementById('editFurnitureModal'));
-                modal.show();
-            })
-            .catch(()=> { /* Error already handled by showErrorMessage */ });
+            qs('edit_id').value = item.id;
+            qs('edit_name').value = item.name ?? '';
+            qs('edit_price').value = item.price ?? '';
+            qs('edit_description').value = item.description ?? '';
+            
+            // show current image preview
+            if(item.image_url){
+                qs('currentImagePreview').innerHTML = `
+                <label class="form-label">Gambar Saat Ini</label>
+                <div><img src="${item.image_url}" onerror="this.onerror=null;this.src='https://placehold.co/180x180/EAEAEA/555555?text=No+Image';" style="max-width:180px;height:auto;border-radius:6px;border:1px solid #ddd;"></div>
+                <small class="text-muted">Kosongkan input 'Ganti Gambar' jika tidak ingin mengubah.</small>
+                `;
+            } else {
+                qs('currentImagePreview').innerHTML = '';
+            }
+
+            // Reset file input for image
+            qs('edit_image').value = null;
+
+            const modal = new bootstrap.Modal(qs('editFurnitureModal'));
+            modal.show();
+
+        } catch (err) {
+            console.error('[FETCH ERROR] Open Edit Modal failed:', err);
+            showErrorMessage('Gagal memuat data untuk edit.');
+        }
     }
 
     /* ===========================
-    UPDATE FURNITURE (PUT via _method override)
+    UPDATE FURNITURE
     =========================== */
-    function updateFurniture(){
+    async function updateFurniture(){
         showError('editErrors','');
-        const form = qs('editFurnitureForm');
         const id = qs('edit_id').value;
+        const form = qs('editFurnitureForm');
         const fd = new FormData(form);
-        fd.append('_method', 'PUT'); // method override for Laravel
 
-        fetch(`/api/furniture/${id}`, {
-            method: 'POST', // use POST with _method=PUT to support multipart
-            body: fd,
-            headers: { 'Accept': 'application/json' },
-            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
-            credentials: 'include'
-        })
-        .then(async res=>{
+        // Tambahkan method override untuk PUT/PATCH karena FormData hanya mendukung GET/POST
+        fd.append('_method', 'PUT');
+
+        // Jika input file kosong, hapus entri 'image' dari FormData agar Laravel tidak memprosesnya
+        // Catatan: Ini penting jika Anda hanya ingin mengupdate data teks tanpa mengubah gambar.
+        if (qs('edit_image').files.length === 0) {
+            fd.delete('image');
+        }
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/furniture/${id}`, {
+                method: 'POST', // Tetap POST, karena kita pakai _method=PUT
+                body: fd,
+                headers: { 'Accept': 'application/json' },
+                credentials: 'include' 
+            });
+
             const json = await res.json();
             if(!res.ok){
+                console.error(`[API ERROR] Update Furniture failed. Status: ${res.status}`);
+                 if (res.status === 401 || res.status === 403) {
+                    showErrorMessage('Akses Ditolak (401/403) saat update item. Anda perlu login ulang.');
+                }
                 showValidationErrors('editErrors', json);
                 return;
             }
 
-            // close modal
             document.querySelector('#editFurnitureModal .btn-close').click();
-            loadFurniture(currentPage);
-        })
-        .catch(()=> showError('editErrors','Failed to update item'));
-    }
+            loadFurniture(currentPage); 
 
-    /* ===========================
-    DELETE FURNITURE (Using Custom Confirm Modal)
-    =========================== */
-    function confirmDelete(id) {
-        // Set ID yang akan dihapus
-        deleteIdToConfirm = id;
-        // Tampilkan modal konfirmasi dengan callback deleteFurnitureAction
-        showConfirmModal('Are you sure you want to delete this item? This action cannot be undone.', deleteFurnitureAction);
+        } catch (err) {
+            console.error('[FETCH ERROR] Update Furniture network error:', err);
+            showError('editErrors','Gagal mengupdate item (Kesalahan Jaringan/Server)');
+        }
     }
     
-    function deleteFurnitureAction(){
-        const id = deleteIdToConfirm;
-        if (!id) return; // safety check
-        
-        fetch(`/api/furniture/${id}`, {
-            method: 'DELETE',
-            headers: { 'Accept': 'application/json' },
-            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
-            credentials: 'include'
-        })
-        .then(async res=>{
-            if(res.status === 204 || res.ok){
-                // remove row if present
-                const row = qs(`row-${id}`);
-                if(row) row.remove();
-                else loadFurniture(currentPage);
-                return;
-            }
-            const json = await res.json();
-            showErrorMessage(json.message || 'Failed to delete');
-        })
-        .catch(()=> showErrorMessage('Failed to delete item due to network error.'));
+    /* ===========================
+    DELETE FURNITURE
+    =========================== */
+    function confirmDelete(id) {
+        deleteIdToConfirm = id;
+        showConfirmModal(`Apakah Anda yakin ingin menghapus item #${id}? Aksi ini tidak bisa dibatalkan.`, deleteFurnitureAction);
     }
 
-    /* ===========================
-    Helpers
-    =========================== */
-    function showValidationErrors(containerId, json){
-        if(!json) return showError(containerId, 'Validation failed');
-        if(json.errors){
-            const msgs = Object.values(json.errors).flat().map(x => escapeHtml(x));
-            showError(containerId, msgs.join('<br>'));
-        } else if(json.message){
-            showError(containerId, escapeHtml(json.message));
-        } else {
-            showError(containerId, 'Validation error');
+    async function deleteFurnitureAction(){
+        const id = deleteIdToConfirm;
+        if (!id) return;
+        
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/furniture/${id}`, {
+                method: 'DELETE',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (!res.ok) {
+                 if (res.status === 401 || res.status === 403) {
+                    showErrorMessage('Akses Ditolak (401/403) saat menghapus item. Anda perlu login ulang.');
+                    console.warn('[AUTH ERROR] Akses Ditolak (401/403) saat delete furniture. Cek Auth/Sanctum.');
+                } else {
+                    showErrorMessage(`Gagal menghapus item #${id}. Status: ${res.status}`);
+                }
+                return;
+            }
+
+            // Hapus baris dari tabel
+            qs(`row-${id}`).remove();
+            loadFurniture(currentPage); // Muat ulang halaman untuk periksa pagination
+
+        } catch (err) {
+            console.error('[FETCH ERROR] Delete Furniture network error:', err);
+            showErrorMessage('Gagal menghapus item (Kesalahan Jaringan/Server)');
         }
     }
 
-    function numberWithCommas(x){
-        if(x===null || x===undefined) return '-';
-        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    /* ===========================
+    INITIAL LOAD
+    =========================== */
+    window.onload = function(){
+        // Inisialisasi Kategori untuk Add Modal, yang juga akan mengisi Filter
+        loadCategoriesFor('addCategorySelect');
+        // Muat Furniture
+        loadFurniture(1);
     }
-
-    function escapeHtml(unsafe){
-        if(unsafe === null || unsafe === undefined) return '';
-        return unsafe.toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    // Call loadFurniture on page load
-    loadFurniture();
 </script>
 
 </body>
