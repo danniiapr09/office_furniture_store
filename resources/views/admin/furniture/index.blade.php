@@ -1,190 +1,275 @@
-{{-- 
-    File: resources/views/admin/furniture/index.blade.php 
-    Halaman ini seharusnya di-extend dari master layout Anda, tetapi saya membuatnya 
-    stand-alone (self-contained) untuk tujuan demonstrasi dan perbaikan error. 
-    Jika Anda memiliki @extends('layouts.admin'), tambahkan di baris atas.
---}}
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Manajemen Furniture - Admin Panel</title>
-    <!-- Asumsikan Anda menggunakan Bootstrap 5.3 untuk styling -->
+    <title>Furniture Management - Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <style>
         :root {
-            --primary-color: #3C7FAA; /* Warna biru baru yang lebih profesional */
-            --secondary-bg: #f8f9fa;
+            --primary-color: #FAA33C; 
+            --secondary-bg: #212529; /* Warna gelap untuk sidebar */
+            --light-bg: #f8f9fa; /* Latar belakang konten */
         }
         body {
+            background-color: var(--light-bg);
+        }
+        
+        /* Layout Grid Utama */
+        #main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling (Sama seperti Dashboard) */
+        #sidebar {
+            width: 250px;
             background-color: var(--secondary-bg);
-            font-family: 'Inter', sans-serif;
-            padding-top: 20px;
+            color: white;
+            padding: 0;
+            flex-shrink: 0;
         }
-        .container {
-            max-width: 1200px;
+        .sidebar-header {
+            padding: 20px 25px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .card { border-radius: 10px; border: 1px solid #e9ecef; }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.7);
+            padding: 12px 25px;
+            border-left: 5px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: white;
+            background-color: rgba(250, 163, 60, 0.1); 
+            border-left-color: var(--primary-color);
+        }
+        .nav-link i {
+            margin-right: 10px;
+        }
+
+        /* Content Area Styling */
+        #content-area {
+            flex-grow: 1;
+            padding: 0;
+        }
+
+        /* Top Header Styling */
+        #top-header {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 15px 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .welcome-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #343a40;
+        }
+
+        /* Main Content Padding */
+        #main-content {
+            padding: 30px;
+        }
+        
+        /* Custom Table Styling */
         .table-hover > tbody > tr:hover > td, 
-        .table-hover > tbody > tr:hover > th { --bs-table-bg-hover: #eaf3fa; }
-        .table-bordered { border-radius: 10px; overflow: hidden; }
-        .table thead { background-color: #e9ecef; }
+        .table-hover > tbody > tr:hover > th {
+            --bs-table-bg-hover: #fff3e0; /* Hover color oranye pucat */
+        }
+        .table-bordered {
+            border-radius: 10px;
+            overflow: hidden; /* agar border radius bekerja pada thead */
+        }
+        .table thead {
+            background-color: #e9ecef;
+        }
+        
         .btn-primary {
              background-color: var(--primary-color);
              border-color: var(--primary-color);
-             border-radius: 6px;
         }
         .btn-primary:hover {
-             background-color: #2e5f80;
-             border-color: #2e5f80;
-        }
-        .btn { border-radius: 6px; }
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1060;
-            flex-direction: column;
+             background-color: #E38D2F;
+             border-color: #E38D2F;
         }
     </style>
 </head>
 <body>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="loading-overlay">
-    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-        <span class="visually-hidden">Memuat...</span>
-    </div>
-    <p class="mt-3 text-primary" id="loadingMessage">Memverifikasi koneksi server...</p>
-</div>
-
-<div class="container" id="main-content" style="display: none;">
+<div id="main-layout">
     
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h3><i class="bi bi-box-seam-fill me-2 text-primary"></i> Manajemen Furniture</h3>
-        <small class="text-muted">Kelola semua produk furniture Anda.</small>
-      </div>
-      <div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFurnitureModal">
-            <i class="bi bi-plus-lg"></i> Tambah Item Baru
-        </button>
-      </div>
-    </div>
-
-    <!-- Area Filter & Search -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-5">
-                    <input id="searchInput" class="form-control" placeholder="Cari berdasarkan nama..." oninput="debouncedLoad()">
-                </div>
-                <div class="col-md-4">
-                    <select id="filterCategory" class="form-select" onchange="loadFurniture(1)">
-                        <option value="">Semua Kategori</option>
-                        <!-- Opsi akan diisi oleh JS -->
-                    </select>
-                </div>
-                <div class="col-md-3 text-end">
-                    <button class="btn btn-outline-secondary w-100" onclick="loadFurniture(1)">
-                        <i class="bi bi-arrow-clockwise"></i> Muat Ulang Data
+    <div id="sidebar">
+        <div class="sidebar-header">
+            Office Furniture Admin
+        </div>
+        
+        <ul class="nav flex-column mt-3">
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/dashboard">
+                    <i class="bi bi-grid-fill"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="/admin/furniture">
+                    <i class="bi bi-box-seam-fill"></i> Manage Furniture
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/categories">
+                    <i class="bi bi-tags-fill"></i> Manage Categories
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/orders">
+                    <i class="bi bi-receipt"></i> Orders
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/users">
+                    <i class="bi bi-people-fill"></i> Users
+                </a>
+            </li>
+            
+            <li class="nav-item mt-5">
+                <form method="POST" action="{{ route('admin.logout') }}">
+                    @csrf
+                    <button class="btn btn-outline-danger w-75 ms-3">
+                        <i class="bi bi-box-arrow-right"></i> Logout
                     </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+    
+    <div id="content-area">
+        
+        <header id="top-header" class="d-flex justify-content-between align-items-center">
+            <div class="welcome-text">
+                Management: <span class="text-primary">Furniture</span>
+            </div>
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-decoration-none">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Furniture</li>
+              </ol>
+            </nav>
+        </header>
+
+        <div id="main-content">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h3><i class="bi bi-box-seam-fill me-2 text-primary"></i> Furniture Data</h3>
+                <small class="text-muted">Kelola semua produk furniture.</small>
+              </div>
+              <div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFurnitureModal">
+                    <i class="bi bi-plus-lg"></i> Add Furniture
+                </button>
+              </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-5">
+                            <input id="searchInput" class="form-control" placeholder="Search by name..." oninput="debouncedLoad()">
+                        </div>
+                        <div class="col-md-4">
+                            <select id="filterCategory" class="form-select" onchange="loadFurniture(1)">
+                                <option value="">All Categories</option>
+                                </select>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button class="btn btn-outline-secondary w-100" onclick="loadFurniture(1)">
+                                <i class="bi bi-arrow-clockwise"></i> Reload Data
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle bg-white">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60">#</th>
+                            <th>Name</th>
+                            <th width="180">Category</th>
+                            <th width="120">Price</th>
+                            <th width="180">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="furniture-table">
+                        <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <nav>
+              <ul id="pagination" class="pagination justify-content-center"></ul>
+            </nav>
         </div>
+        
     </div>
-    
-    <!-- Peringatan Autentikasi -->
-    <div id="authAlert" class="alert alert-danger d-none" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i> 
-        <strong>Akses Ditolak!</strong> Anda mungkin belum login atau ada masalah konfigurasi Session/Sanctum di server Laravel Anda.
-    </div>
-
-    <!-- Tabel Data Furniture -->
-    <div class="table-responsive">
-        <table class="table table-hover table-bordered align-middle bg-white">
-            <thead class="table-light">
-                <tr>
-                    <th width="60">#</th>
-                    <th>Nama</th>
-                    <th width="180">Kategori</th>
-                    <th width="120">Harga</th>
-                    <th width="180">Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="furniture-table">
-                <tr><td colspan="5" class="text-center">Data sedang dimuat...</td></tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Pagination -->
-    <nav>
-      <ul id="pagination" class="pagination justify-content-center"></ul>
-    </nav>
 </div>
 
-<!-- Modal ADD Furniture -->
 <div class="modal fade" id="addFurnitureModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title"><i class="bi bi-plus-circle-fill me-2"></i> Tambah Furniture Baru</h5>
+          <h5 class="modal-title"><i class="bi bi-plus-circle-fill me-2"></i> Add New Furniture</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <form id="addFurnitureForm">
             <div id="addErrors" class="text-danger small mb-2"></div>
- 
+  
             <div class="row">
               <div class="col-md-8 mb-3">
-                <label class="form-label">Nama</label>
+                <label class="form-label">Name</label>
                 <input type="text" name="name" class="form-control" required>
               </div>
               <div class="col-md-4 mb-3">
-                <label class="form-label">Kategori</label>
+                <label class="form-label">Category</label>
                 <select name="category_id" class="form-select" id="addCategorySelect" required>
-                  <option value="">Memuat...</option>
+                  <option value="">Loading...</option>
                 </select>
               </div>
             </div>
- 
+  
             <div class="mb-3">
-              <label class="form-label">Harga</label>
+              <label class="form-label">Price</label>
               <input type="number" name="price" class="form-control" required>
             </div>
- 
+  
             <div class="mb-3">
-              <label class="form-label">Deskripsi</label>
+              <label class="form-label">Description</label>
               <textarea name="description" class="form-control" rows="3"></textarea>
             </div>
- 
+  
             <div class="mb-3">
-              <label class="form-label">Gambar</label>
+              <label class="form-label">Image</label>
               <input type="file" name="image" class="form-control">
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button class="btn btn-primary" onclick="createFurniture()">
-            <i class="bi bi-save"></i> Simpan Item
+            <i class="bi bi-save"></i> Save Item
           </button>
         </div>
       </div>
     </div>
 </div>
 
-<!-- Modal EDIT Furniture -->
 <div class="modal fade" id="editFurnitureModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -195,298 +280,144 @@
         <div class="modal-body">
           <form id="editFurnitureForm">
             <input type="hidden" name="id" id="edit_id">
- 
+  
             <div id="editErrors" class="text-danger small mb-2"></div>
- 
+  
             <div class="row">
               <div class="col-md-8 mb-3">
-                <label class="form-label">Nama</label>
+                <label class="form-label">Name</label>
                 <input type="text" name="name" id="edit_name" class="form-control" required>
               </div>
               <div class="col-md-4 mb-3">
-                <label class="form-label">Kategori</label>
+                <label class="form-label">Category</label>
                 <select name="category_id" class="form-select" id="editCategorySelect" required>
-                  <option value="">Memuat...</option>
+                  <option value="">Loading...</option>
                 </select>
               </div>
             </div>
- 
+  
             <div class="mb-3">
-              <label class="form-label">Harga</label>
+              <label class="form-label">Price</label>
               <input type="number" name="price" id="edit_price" class="form-control" required>
             </div>
- 
+  
             <div class="mb-3">
-              <label class="form-label">Deskripsi</label>
+              <label class="form-label">Description</label>
               <textarea name="description" id="edit_description" class="form-control" rows="3"></textarea>
             </div>
- 
+  
             <div class="mb-3">
-              <label class="form-label">Ganti Gambar (opsional)</label>
+              <label class="form-label">Replace Image (optional)</label>
               <input type="file" name="image" id="edit_image" class="form-control">
             </div>
- 
+  
             <div id="currentImagePreview" class="mb-3"></div>
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button class="btn btn-primary" onclick="updateFurniture()">
-            <i class="bi bi-upload"></i> Perbarui
+            <i class="bi bi-upload"></i> Update
           </button>
         </div>
       </div>
     </div>
 </div>
 
-<!-- Custom Message Modal (Alert replacement) -->
-<div class="modal fade" id="messageModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="messageModalTitle"><i class="bi bi-exclamation-triangle-fill me-2"></i> Error</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="messageModalBody">
-                Pesan error akan muncul di sini.
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Custom Confirm Modal (Confirm replacement) -->
-<div class="modal fade" id="confirmModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-question-circle-fill me-2"></i> Konfirmasi Aksi</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="confirmModalBody">
-                Apakah Anda yakin?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-danger" id="confirmActionBtn">Ya, Hapus</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     /* ---------------------------
-    CONFIG & HELPER
+    Config & helper
     ----------------------------*/
-    // KRITIS: GANTI URL INI sesuai dengan URL Laravel API Anda (gunakan domain yang sama dengan frontend)
-    // Jika Anda menggunakan domain Railway, ganti:
-    const API_BASE_URL = 'https://officefurniturestore-production.up.railway.app'; 
-    // Jika Anda masih di lokal, ganti ke:
-    // const API_BASE_URL = 'http://127.0.0.1:8000'; 
-    
     let currentPage = 1;
     let lastPage = 1;
+    let perPage = 10;
     let searchTimeout = null;
-    let isAppReady = false; 
-
-    // Helper DOM
-    const qs = id => document.getElementById(id);
-
-    // Formatting
-    const escapeHtml = (unsafe) => {
-        if (!unsafe) return '';
-        return unsafe.toString().replace(/[&<>"']/g, function(m) {
-            return {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            }[m];
-        });
-    };
-    const numberWithCommas = (x) => {
-        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    };
-
-    // Custom Alert replacement (menggunakan modal)
-    const showErrorMessage = (message, title = 'Error Koneksi') => {
-        qs('messageModalTitle').innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i> ${title}`;
-        qs('messageModalBody').innerHTML = escapeHtml(message);
-        const modal = new bootstrap.Modal(qs('messageModal'));
-        modal.show();
-    };
     
-    // Custom Confirm replacement (menggunakan modal)
-    const showConfirmModal = (message, callback) => {
-        qs('confirmModalBody').innerHTML = escapeHtml(message);
-        const confirmBtn = qs('confirmActionBtn');
-        
-        // Atur event handler baru
-        confirmBtn.onclick = () => {
-            document.querySelector('#confirmModal .btn-close').click();
-            callback();
-        };
-
-        const modal = new bootstrap.Modal(qs('confirmModal'));
-        modal.show();
+    // Pastikan ID input search hanya satu
+    document.getElementById('searchInput').oninput = function() {
+        // Hapus elemen search input yang terulang di HTML asli (col-md-6 kedua)
     };
 
-    /* -------------------------------------
-    INISIALISASI APLIKASI (Minta CSRF Token)
-    --------------------------------------*/
-    async function initApp() {
-        qs('loadingMessage').textContent = 'Memverifikasi sesi admin...';
-        
-        // KRITIS: Langkah 1 - Permintaan cookie CSRF untuk Sanctum
-        try {
-            const res = await fetch(`${API_BASE_URL}/sanctum/csrf-cookie`, {
-                method: 'GET',
-                credentials: 'include' // Wajib agar cookie diterima
-            });
-
-            if (!res.ok) {
-                console.error(`[AUTH INIT ERROR] Gagal mendapatkan CSRF cookie. Status: ${res.status}`);
-                showErrorMessage(`Gagal inisialisasi sesi (${res.status}). Cek SANCTUM_STATEFUL_DOMAINS di .env.`, 'Error Inisialisasi');
-                
-                qs('loadingOverlay').style.display = 'none';
-                return;
-            }
-            
-            console.log('[AUTH INIT SUCCESS] CSRF Cookie berhasil diterima. Memuat data utama...');
-            isAppReady = true;
-            
-            // Langkah 2 - Lanjutkan pemuatan data utama setelah sukses
-            loadCategoriesFor('addCategorySelect');
-            loadFurniture(1);
-            
-            qs('loadingOverlay').style.display = 'none';
-            qs('main-content').style.display = 'block';
-
-        } catch (err) {
-            console.error('[FETCH ERROR] General fetch error during init:', err);
-             if (err.message.includes('Failed to fetch')) {
-                 showErrorMessage(`Gagal terhubung ke API di ${API_BASE_URL}. Pastikan server Laravel berjalan.`, 'Error Koneksi Jaringan');
-            } else {
-                 showErrorMessage(`Gagal inisialisasi aplikasi. Error: ${err.message}`);
-            }
-            qs('loadingOverlay').style.display = 'none';
-        }
-    }
-
+    function qs(id){ return document.getElementById(id); }
+    function showError(containerId, message){ qs(containerId).innerHTML = message; }
 
     /* ===========================
-    LOAD FURNITURE (LIST, SEARCH, FILTER)
+    LOAD FURNITURE (with search & pagination)
+    GET /api/furniture?page=...&q=...
     =========================== */
-    async function loadFurniture(page = 1) {
-        if (!isAppReady) return; 
-
-        qs('authAlert').classList.add('d-none'); // Sembunyikan alert auth
+    function loadFurniture(page = 1) {
         currentPage = page;
-        const categoryId = qs('filterCategory').value || '';
-        const q = encodeURIComponent(qs('searchInput').value || '');
+        // Ambil nilai dari filter kategori
+        const categoryId = document.getElementById('filterCategory').value || '';
+        const q = encodeURIComponent(document.getElementById('searchInput').value || '');
         
-        let url = `${API_BASE_URL}/api/furniture?page=${page}&q=${q}`;
+        let url = `/api/furniture?page=${page}&q=${q}`;
         if (categoryId) {
             url += `&category_id=${categoryId}`;
         }
-        
-        qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm me-2"></div> Memuat Data...</td></tr>`;
 
-        try {
-            const res = await fetch(url, {
-                // KRITIS: Wajib untuk mengirim cookie session (Sanctum)
-                credentials: 'include' 
-            });
+        fetch(url)
+            .then(async res => {
+                if(!res.ok) throw new Error('Failed to load');
+                const payload = await res.json();
 
-            if (!res.ok) {
-                // Jika 401/403: Tampilkan alert otentikasi
-                if (res.status === 401 || res.status === 403) {
-                    qs('authAlert').classList.remove('d-none'); 
-                    console.warn('[AUTH ERROR] Akses Ditolak (401/403). Cek Auth/Sanctum.');
-                    qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Sesi login habis/tidak valid. Silakan login kembali.</td></tr>`;
-                    return;
+                // Accept either paginated structure or simple array
+                let items = payload.data ?? payload;
+                // when paginated
+                if(payload.meta){
+                    currentPage = payload.meta.current_page;
+                    lastPage = payload.meta.last_page;
+                } else if(payload.last_page){
+                    currentPage = payload.current_page;
+                    lastPage = payload.last_page;
                 } else {
-                    // Jika 500: Kemungkinan error di Controller
-                    if (res.status === 500) {
-                        const errorText = await res.text();
-                         showErrorMessage(`Gagal memuat data. Status: 500 (Internal Server Error). Pesan: ${errorText.substring(0, 500)}... Cek log Laravel!`, 'Server Error 500');
-                    } else {
-                        showErrorMessage(`Gagal memuat data. Status: ${res.status}.`);
-                    }
-                    throw new Error('Failed to load furniture data.');
+                    // fallback
+                    currentPage = page;
+                    lastPage = 1;
                 }
-            }
 
-            const payload = await res.json();
-            
-            // Penanganan Struktur Pagination (untuk Laravel Resources/Paginator)
-            const items = payload.data ?? payload.items ?? payload;
-            if (payload.meta) { // Laravel Resource Collection
-                currentPage = payload.meta.current_page;
-                lastPage = payload.meta.last_page;
-            } else if (payload.last_page) { // Laravel Simple Paginator
-                currentPage = payload.current_page;
-                lastPage = payload.last_page;
-            } else {
-                currentPage = page;
-                lastPage = 1;
-            }
-
-            let html = '';
-            
-            if (!items || items.length === 0) {
-                html = `<tr><td colspan="5" class="text-center">Tidak ada data furniture ditemukan.</td></tr>`;
-            } else {
-                items.forEach((item, index) => {
-                    const rowNumber = (currentPage - 1) * 15 + index + 1; // Asumsi 15 items per page
-                    html += `
-                        <tr id="row-${item.id}">
-                            <td>${rowNumber}</td>
-                            <td>${escapeHtml(item.name)}</td>
-                            <td>${escapeHtml(item.category?.name ?? 'Tanpa Kategori')}</td>
-                            <td>Rp ${numberWithCommas(item.price)}</td>
-                            <td>
-                                <button class="btn btn-sm btn-warning me-1" onclick="openEditModal(${item.id})"><i class="bi bi-pencil"></i> Edit</button>
-                                <button class="btn btn-sm btn-danger" onclick="confirmDelete(${item.id})"><i class="bi bi-trash"></i> Hapus</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-            qs('furniture-table').innerHTML = html;
-            renderPagination();
-
-        } catch (err) {
-            console.error('[FETCH ERROR] General fetch error:', err);
-             if (err.message.includes('Failed to fetch')) {
-                 showErrorMessage(`Gagal terhubung ke API (Jaringan/Koneksi Ditolak). Pastikan API_BASE_URL sudah benar.`, 'Error Koneksi Jaringan');
-             }
-            qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-danger text-center">Gagal memuat data (Kesalahan Jaringan)</td></tr>`;
-        }
+                let html = '';
+                if(!items || items.length === 0){
+                    html = `<tr><td colspan="5" class="text-center">No data</td></tr>`;
+                } else {
+                    items.forEach(item => {
+                        html += `
+                            <tr id="row-${item.id}">
+                                <td>${item.id}</td>
+                                <td>${escapeHtml(item.name)}</td>
+                                <td>${escapeHtml(item.category?.name ?? '-')}</td>
+                                <td>Rp ${numberWithCommas(item.price)}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning me-1" onclick="openEditModal(${item.id})"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteFurniture(${item.id})"><i class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                qs('furniture-table').innerHTML = html;
+                renderPagination();
+            })
+            .catch(err=>{
+                qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-danger text-center">Error loading data</td></tr>`;
+            });
     }
 
     /* debounce loader for search input */
-    const debouncedLoad = () => {
+    function debouncedLoad(){
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => loadFurniture(1), 400);
-    };
-    
+        searchTimeout = setTimeout(()=> loadFurniture(1), 400);
+    }
+
     /* ===========================
     Pagination render
     =========================== */
-    const renderPagination = () => {
+    function renderPagination(){
         const ul = qs('pagination');
         ul.innerHTML = '';
         if(lastPage <= 1) return;
-
-        // ... (Logic Pagination sama seperti sebelumnya)
-        // ... (Pastikan logic pagination di sini sesuai dengan kebutuhan)
 
         const makeItem = (p, text, active=false) => {
             return `<li class="page-item ${active ? 'active' : ''}">
@@ -494,8 +425,10 @@
                     </li>`;
         };
 
+        // prev
         if(currentPage > 1) ul.innerHTML += makeItem(currentPage-1, '« Prev');
 
+        // show 1..n (simple)
         let startPage = Math.max(1, currentPage - 2);
         let endPage = Math.min(lastPage, currentPage + 2);
 
@@ -510,267 +443,186 @@
 
         if (endPage < lastPage) ul.innerHTML += makeItem(lastPage, '...'+lastPage);
 
+
+        // next
         if(currentPage < lastPage) ul.innerHTML += makeItem(currentPage+1, 'Next »');
-    };
+    }
 
     /* ===========================
     Load categories (for filter, add & edit)
     =========================== */
-    async function loadCategoriesFor(selectId, selected = null){
-        if (!isAppReady) return; 
-
-        const selectElement = qs(selectId);
-        selectElement.innerHTML = '<option value="">Memuat...</option>';
-
-        const url = `${API_BASE_URL}/api/categories`;
-        
-        try {
-            const res = await fetch(url, {
-                credentials: 'include'
-            });
-            
-            if(!res.ok) {
-                 if (res.status === 401 || res.status === 403) {
-                    showErrorMessage('Akses Ditolak saat memuat Kategori (401/403). Session mungkin habis.', 'Error Otorisasi');
-                 } else {
-                     showErrorMessage(`Gagal memuat kategori. Status: ${res.status}.`);
-                 }
-                selectElement.innerHTML = '<option value="">Error memuat</option>';
-                return;
-            }
-
-            const data = await res.json();
-            const categories = data.data ?? data;
-            
-            let html = '<option value="">-- Pilih Kategori --</option>';
-            
-            categories.forEach(cat=>{
-                html += `<option value="${cat.id}" ${selected && selected==cat.id ? 'selected':''}>${escapeHtml(cat.name)}</option>`;
-            });
-            selectElement.innerHTML = html;
-
-            // Salin opsi ke dropdown filter
-            if (selectId === 'addCategorySelect') {
-                const filterSelect = qs('filterCategory');
-                if (filterSelect) {
-                    filterSelect.innerHTML = `<option value="">Semua Kategori</option>` + html.substring(html.indexOf('>')+1);
-                }
-            }
-
-        } catch (err) {
-            console.error('[FETCH ERROR] Category load failed:', err);
-             if (err.message.includes('Failed to fetch')) {
-                 showErrorMessage(`Gagal terhubung ke API Kategori.`);
-             }
-            selectElement.innerHTML = '<option value="">Error memuat</option>';
-        }
-    }
-
-    /* ===========================
-    Show Validation Errors
-    =========================== */
-    const showValidationErrors = (containerId, json) => {
-        let errorHtml = '';
-        if (json.errors) {
-            for (const key in json.errors) {
-                json.errors[key].forEach(msg => {
-                    errorHtml += `<div>• ${msg}</div>`;
+    function loadCategoriesFor(selectId, selected = null){
+        fetch('/api/categories')
+            .then(res=>res.json())
+            .then(data=>{
+                let html = '<option value="">-- Select Category --</option>';
+                data.forEach(cat=>{
+                    html += `<option value="${cat.id}" ${selected && selected==cat.id ? 'selected':''}>${escapeHtml(cat.name)}</option>`;
                 });
-            }
-        } else if (json.message) {
-            errorHtml = `<div>• ${json.message}</div>`;
-        }
-        qs(containerId).innerHTML = errorHtml;
-    };
+                qs(selectId).innerHTML = html;
+
+                // Load filter category too
+                if (selectId === 'addCategorySelect') {
+                    const filterSelect = qs('filterCategory');
+                    if (filterSelect) {
+                        filterSelect.innerHTML = `<option value="">All Categories</option>` + html.substring(html.indexOf('>')+1);
+                    }
+                }
+            })
+            .catch(()=> qs(selectId).innerHTML = '<option value="">Error loading</option>');
+    }
+    // initial load for add form AND filter dropdown
+    loadCategoriesFor('addCategorySelect');
 
 
     /* ===========================
     CREATE FURNITURE
     =========================== */
-    async function createFurniture(){
-        if (!isAppReady) return; 
-
-        const errorContainer = 'addErrors';
-        qs(errorContainer).innerHTML = '';
+    function createFurniture(){
+        showError('addErrors','');
         const form = qs('addFurnitureForm');
         const fd = new FormData(form);
 
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/furniture`, {
-                method: 'POST',
-                body: fd,
-                headers: { 'Accept': 'application/json' },
-                credentials: 'include' 
-            });
-
+        fetch('/api/furniture', {
+            method: 'POST',
+            body: fd,
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(async res=>{
             const json = await res.json();
-            
             if(!res.ok){
-                if (res.status === 401 || res.status === 403) {
-                    showErrorMessage('Akses Ditolak (401/403) saat membuat item. Anda perlu login ulang.', 'Error Otorisasi');
-                }
-                showValidationErrors(errorContainer, json);
+                showValidationErrors('addErrors', json);
                 return;
             }
-            
+            // close modal
             document.querySelector('#addFurnitureModal .btn-close').click();
             form.reset();
+            // Load data ke halaman 1 setelah berhasil menambah
             loadFurniture(1); 
-            showErrorMessage('Item berhasil ditambahkan!', 'Sukses');
-
-        } catch (err) {
-            console.error('[FETCH ERROR] Create Furniture network error:', err);
-            qs(errorContainer).innerHTML = 'Gagal membuat item (Kesalahan Jaringan/Server)';
-        }
+        })
+        .catch(()=> showError('addErrors','Failed to create item'));
     }
 
     /* ===========================
     OPEN EDIT MODAL (populate)
+    GET /api/furniture/{id}
     =========================== */
-    async function openEditModal(id){
-        if (!isAppReady) return; 
-
-        qs('editErrors').innerHTML = '';
+    function openEditModal(id){
+        showError('editErrors','');
         
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/furniture/${id}`, {
-                credentials: 'include'
-            });
-            
-            if(!res.ok) {
-                 if (res.status === 401 || res.status === 403) {
-                    showErrorMessage('Akses Ditolak (401/403). Session mungkin habis.', 'Error Otorisasi');
-                 }
-                showErrorMessage('Gagal memuat data item. Mungkin tidak ditemukan.');
-                return;
-            }
-            
-            const data = await res.json();
-            const item = data.data ?? data; 
+        fetch(`/api/furniture/${id}`)
+            .then(async res=>{
+                if(!res.ok) throw new Error('not found');
+                const item = await res.json();
+                
+                // populate categories first, passing the selected category_id
+                loadCategoriesFor('editCategorySelect', item.category_id);
 
-            // Populate categories dan pilih yang sesuai
-            loadCategoriesFor('editCategorySelect', item.category_id);
+                qs('edit_id').value = item.id;
+                qs('edit_name').value = item.name ?? '';
+                qs('edit_price').value = item.price ?? '';
+                qs('edit_description').value = item.description ?? '';
+                
+                // show current image preview if exists
+                if(item.image_url){
+                    qs('currentImagePreview').innerHTML = `
+                    <label class="form-label">Current Image</label>
+                    <div><img src="${item.image_url}" style="max-width:180px;height:auto;border-radius:6px;border:1px solid #ddd;"></div>`;
+                } else {
+                    qs('currentImagePreview').innerHTML = '';
+                }
 
-            qs('edit_id').value = item.id;
-            qs('edit_name').value = item.name ?? '';
-            qs('edit_price').value = item.price ?? '';
-            qs('edit_description').value = item.description ?? '';
-            
-            // Preview Gambar
-            if(item.image_url){
-                qs('currentImagePreview').innerHTML = `
-                <label class="form-label">Gambar Saat Ini</label>
-                <div><img src="${item.image_url}" onerror="this.onerror=null;this.src='https://placehold.co/180x180/EAEAEA/555555?text=No+Image';" style="max-width:180px;height:auto;border-radius:6px;border:1px solid #ddd;"></div>
-                <small class="text-muted">Kosongkan input 'Ganti Gambar' jika tidak ingin mengubah.</small>
-                `;
-            } else {
-                qs('currentImagePreview').innerHTML = '';
-            }
-
-            // Reset file input
-            qs('edit_image').value = null;
-
-            const modal = new bootstrap.Modal(qs('editFurnitureModal'));
-            modal.show();
-
-        } catch (err) {
-            console.error('[FETCH ERROR] Open Edit Modal failed:', err);
-            showErrorMessage('Gagal memuat data untuk edit.');
-        }
+                // open modal
+                const modal = new bootstrap.Modal(document.getElementById('editFurnitureModal'));
+                modal.show();
+            })
+            .catch(()=> alert('Failed to load item data'));
     }
 
     /* ===========================
-    UPDATE FURNITURE
+    UPDATE FURNITURE (PUT via _method override)
     =========================== */
-    async function updateFurniture(){
-        if (!isAppReady) return; 
-
-        const errorContainer = 'editErrors';
-        qs(errorContainer).innerHTML = '';
-        const id = qs('edit_id').value;
+    function updateFurniture(){
+        showError('editErrors','');
         const form = qs('editFurnitureForm');
+        const id = qs('edit_id').value;
         const fd = new FormData(form);
+        fd.append('_method', 'PUT'); // method override for Laravel
 
-        // Tambahkan method override untuk PUT/PATCH karena FormData hanya mendukung GET/POST
-        fd.append('_method', 'PUT');
-
-        if (qs('edit_image').files.length === 0) {
-            fd.delete('image'); // Jangan kirim field 'image' jika kosong
-        }
-
-        try {
-            // Kita tetap menggunakan method POST di fetch, tetapi Laravel akan menangkap _method=PUT
-            const res = await fetch(`${API_BASE_URL}/api/furniture/${id}`, {
-                method: 'POST', 
-                body: fd,
-                headers: { 'Accept': 'application/json' },
-                credentials: 'include' 
-            });
-
+        fetch(`/api/furniture/${id}`, {
+            method: 'POST', // use POST with _method=PUT to support multipart
+            body: fd,
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(async res=>{
             const json = await res.json();
             if(!res.ok){
-                if (res.status === 401 || res.status === 403) {
-                    showErrorMessage('Akses Ditolak (401/403) saat update item. Anda perlu login ulang.', 'Error Otorisasi');
-                }
-                showValidationErrors(errorContainer, json);
+                showValidationErrors('editErrors', json);
                 return;
             }
 
+            // close modal
             document.querySelector('#editFurnitureModal .btn-close').click();
-            loadFurniture(currentPage); 
-            showErrorMessage('Item berhasil diperbarui!', 'Sukses');
-
-        } catch (err) {
-            console.error('[FETCH ERROR] Update Furniture network error:', err);
-            qs(errorContainer).innerHTML = 'Gagal mengupdate item (Kesalahan Jaringan/Server)';
-        }
+            loadFurniture(currentPage);
+        })
+        .catch(()=> showError('editErrors','Failed to update item'));
     }
-    
+
     /* ===========================
     DELETE FURNITURE
     =========================== */
-    function confirmDelete(id) {
-        if (!isAppReady) return; 
-        showConfirmModal(`Apakah Anda yakin ingin menghapus item #${id}? Aksi ini tidak bisa dibatalkan.`, () => deleteFurnitureAction(id));
-    }
-
-    async function deleteFurnitureAction(id){
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/furniture/${id}`, {
-                method: 'DELETE',
-                headers: { 'Accept': 'application/json' },
-                credentials: 'include'
-            });
-
-            if (!res.ok) {
-                 if (res.status === 401 || res.status === 403) {
-                    showErrorMessage('Akses Ditolak (401/403) saat menghapus item. Anda perlu login ulang.', 'Error Otorisasi');
-                } else {
-                    showErrorMessage(`Gagal menghapus item #${id}. Status: ${res.status}`);
-                }
+    function deleteFurniture(id){
+        if(!confirm('Are you sure you want to delete this item?')) return;
+        fetch(`/api/furniture/${id}`, {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(async res=>{
+            if(res.status === 204 || res.ok){
+                // remove row if present
+                const row = qs(`row-${id}`);
+                if(row) row.remove();
+                else loadFurniture(currentPage);
                 return;
             }
-
-            // Hapus baris dari tabel dan muat ulang
-            const row = qs(`row-${id}`);
-            if (row) row.remove();
-            loadFurniture(currentPage); 
-            showErrorMessage('Item berhasil dihapus!', 'Sukses');
-
-
-        } catch (err) {
-            console.error('[FETCH ERROR] Delete Furniture network error:', err);
-            showErrorMessage('Gagal menghapus item (Kesalahan Jaringan/Server)');
-        }
+            const json = await res.json();
+            alert(json.message || 'Failed to delete');
+        })
+        .catch(()=> alert('Failed to delete'));
     }
 
     /* ===========================
-    INITIAL LOAD
+    Helpers
     =========================== */
-    window.onload = function(){
-        // Mulai proses inisialisasi CSRF dan pemuatan data
-        initApp();
+    function showValidationErrors(containerId, json){
+        if(!json) return showError(containerId, 'Validation failed');
+        if(json.errors){
+            const msgs = Object.values(json.errors).flat().map(x => escapeHtml(x));
+            showError(containerId, msgs.join('<br>'));
+        } else if(json.message){
+            showError(containerId, escapeHtml(json.message));
+        } else {
+            showError(containerId, 'Validation error');
+        }
     }
+
+    function numberWithCommas(x){
+        if(x===null || x===undefined) return '-';
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function escapeHtml(unsafe){
+        if(unsafe === null || unsafe === undefined) return '';
+        return unsafe.toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Call loadFurniture on page load
+    loadFurniture();
 </script>
 
 </body>
