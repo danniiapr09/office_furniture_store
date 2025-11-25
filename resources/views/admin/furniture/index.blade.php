@@ -15,6 +15,7 @@
         }
         body {
             background-color: var(--light-bg);
+            font-family: 'Inter', sans-serif;
         }
         
         /* Layout Grid Utama */
@@ -30,6 +31,7 @@
             color: white;
             padding: 0;
             flex-shrink: 0;
+            border-radius: 0 10px 10px 0;
         }
         .sidebar-header {
             padding: 20px 25px;
@@ -43,6 +45,7 @@
             padding: 12px 25px;
             border-left: 5px solid transparent;
             transition: all 0.2s;
+            border-radius: 0;
         }
         .nav-link:hover, .nav-link.active {
             color: white;
@@ -78,6 +81,10 @@
         }
         
         /* Custom Table Styling */
+        .card {
+            border-radius: 10px;
+            border: none;
+        }
         .table-hover > tbody > tr:hover > td, 
         .table-hover > tbody > tr:hover > th {
             --bs-table-bg-hover: #fff3e0; /* Hover color oranye pucat */
@@ -93,10 +100,14 @@
         .btn-primary {
              background-color: var(--primary-color);
              border-color: var(--primary-color);
+             border-radius: 6px;
         }
         .btn-primary:hover {
              background-color: #E38D2F;
              border-color: #E38D2F;
+        }
+        .btn {
+            border-radius: 6px;
         }
     </style>
 </head>
@@ -220,6 +231,7 @@
     </div>
 </div>
 
+<!-- Modal ADD Furniture -->
 <div class="modal fade" id="addFurnitureModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -230,7 +242,7 @@
         <div class="modal-body">
           <form id="addFurnitureForm">
             <div id="addErrors" class="text-danger small mb-2"></div>
-  
+ 
             <div class="row">
               <div class="col-md-8 mb-3">
                 <label class="form-label">Name</label>
@@ -243,17 +255,17 @@
                 </select>
               </div>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Price</label>
               <input type="number" name="price" class="form-control" required>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Description</label>
               <textarea name="description" class="form-control" rows="3"></textarea>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Image</label>
               <input type="file" name="image" class="form-control">
@@ -270,6 +282,7 @@
     </div>
 </div>
 
+<!-- Modal EDIT Furniture -->
 <div class="modal fade" id="editFurnitureModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -280,9 +293,9 @@
         <div class="modal-body">
           <form id="editFurnitureForm">
             <input type="hidden" name="id" id="edit_id">
-  
+ 
             <div id="editErrors" class="text-danger small mb-2"></div>
-  
+ 
             <div class="row">
               <div class="col-md-8 mb-3">
                 <label class="form-label">Name</label>
@@ -295,22 +308,22 @@
                 </select>
               </div>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Price</label>
               <input type="number" name="price" id="edit_price" class="form-control" required>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Description</label>
               <textarea name="description" id="edit_description" class="form-control" rows="3"></textarea>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Replace Image (optional)</label>
               <input type="file" name="image" id="edit_image" class="form-control">
             </div>
-  
+ 
             <div id="currentImagePreview" class="mb-3"></div>
           </form>
         </div>
@@ -324,6 +337,44 @@
     </div>
 </div>
 
+<!-- Custom Message Modal (Alert replacement) -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="messageModalTitle"><i class="bi bi-exclamation-triangle-fill me-2"></i> Error</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="messageModalBody">
+                Message content here.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Confirm Modal (Confirm replacement) -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-question-circle-fill me-2"></i> Confirm Action</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                Are you sure?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmActionBtn">Yes, Proceed</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -335,13 +386,40 @@
     let perPage = 10;
     let searchTimeout = null;
     
-    // Pastikan ID input search hanya satu
-    document.getElementById('searchInput').oninput = function() {
-        // Hapus elemen search input yang terulang di HTML asli (col-md-6 kedua)
-    };
+    // Global variable for the delete ID when using the custom confirmation modal
+    let deleteIdToConfirm = null; 
 
+    // Helper functions
     function qs(id){ return document.getElementById(id); }
     function showError(containerId, message){ qs(containerId).innerHTML = message; }
+    
+    // Custom Alert replacement
+    function showErrorMessage(message) {
+        qs('messageModalBody').innerHTML = escapeHtml(message);
+        const modal = new bootstrap.Modal(qs('messageModal'));
+        modal.show();
+    }
+    
+    // Custom Confirm replacement
+    function showConfirmModal(message, callback) {
+        qs('confirmModalBody').innerHTML = escapeHtml(message);
+        const confirmBtn = qs('confirmActionBtn');
+        
+        // Clear previous event listener
+        confirmBtn.onclick = null;
+        
+        // Set new event listener
+        confirmBtn.onclick = function() {
+            // Close modal first
+            document.querySelector('#confirmModal .btn-close').click();
+            // Execute the callback function (e.g., deleteFurnitureAction)
+            callback();
+        };
+
+        const modal = new bootstrap.Modal(qs('confirmModal'));
+        modal.show();
+    }
+
 
     /* ===========================
     LOAD FURNITURE (with search & pagination)
@@ -358,9 +436,17 @@
             url += `&category_id=${categoryId}`;
         }
 
-        fetch(url)
+        fetch(url, {
+            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
+            credentials: 'include'
+        })
             .then(async res => {
-                if(!res.ok) throw new Error('Failed to load');
+                if(!res.ok) {
+                    if (res.status === 401 || res.status === 403) {
+                         showErrorMessage('Access Denied. Please log in again.');
+                    }
+                    throw new Error('Failed to load');
+                }
                 const payload = await res.json();
 
                 // Accept either paginated structure or simple array
@@ -391,7 +477,7 @@
                                 <td>Rp ${numberWithCommas(item.price)}</td>
                                 <td>
                                     <button class="btn btn-sm btn-warning me-1" onclick="openEditModal(${item.id})"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteFurniture(${item.id})"><i class="bi bi-trash"></i></button>
+                                    <button class="btn btn-sm btn-danger" onclick="confirmDelete(${item.id})"><i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>
                         `;
@@ -401,6 +487,9 @@
                 renderPagination();
             })
             .catch(err=>{
+                 if (err.message !== 'Failed to load') {
+                    showErrorMessage('Network Error or API call failed: ' + err.message);
+                }
                 qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-danger text-center">Error loading data</td></tr>`;
             });
     }
@@ -452,7 +541,10 @@
     Load categories (for filter, add & edit)
     =========================== */
     function loadCategoriesFor(selectId, selected = null){
-        fetch('/api/categories')
+        fetch('/api/categories', {
+            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
+            credentials: 'include'
+        })
             .then(res=>res.json())
             .then(data=>{
                 let html = '<option value="">-- Select Category --</option>';
@@ -486,7 +578,9 @@
         fetch('/api/furniture', {
             method: 'POST',
             body: fd,
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json' },
+            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
+            credentials: 'include' 
         })
         .then(async res=>{
             const json = await res.json();
@@ -510,9 +604,15 @@
     function openEditModal(id){
         showError('editErrors','');
         
-        fetch(`/api/furniture/${id}`)
+        fetch(`/api/furniture/${id}`, {
+            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
+            credentials: 'include'
+        })
             .then(async res=>{
-                if(!res.ok) throw new Error('not found');
+                if(!res.ok) {
+                    showErrorMessage('Failed to load item data. Might be unauthenticated or not found.');
+                    throw new Error('not found');
+                }
                 const item = await res.json();
                 
                 // populate categories first, passing the selected category_id
@@ -527,7 +627,7 @@
                 if(item.image_url){
                     qs('currentImagePreview').innerHTML = `
                     <label class="form-label">Current Image</label>
-                    <div><img src="${item.image_url}" style="max-width:180px;height:auto;border-radius:6px;border:1px solid #ddd;"></div>`;
+                    <div><img src="${item.image_url}" onerror="this.onerror=null;this.src='https://placehold.co/180x180/EAEAEA/555555?text=No+Image';" style="max-width:180px;height:auto;border-radius:6px;border:1px solid #ddd;"></div>`;
                 } else {
                     qs('currentImagePreview').innerHTML = '';
                 }
@@ -536,7 +636,7 @@
                 const modal = new bootstrap.Modal(document.getElementById('editFurnitureModal'));
                 modal.show();
             })
-            .catch(()=> alert('Failed to load item data'));
+            .catch(()=> { /* Error already handled by showErrorMessage */ });
     }
 
     /* ===========================
@@ -552,7 +652,9 @@
         fetch(`/api/furniture/${id}`, {
             method: 'POST', // use POST with _method=PUT to support multipart
             body: fd,
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json' },
+            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
+            credentials: 'include'
         })
         .then(async res=>{
             const json = await res.json();
@@ -569,13 +671,24 @@
     }
 
     /* ===========================
-    DELETE FURNITURE
+    DELETE FURNITURE (Using Custom Confirm Modal)
     =========================== */
-    function deleteFurniture(id){
-        if(!confirm('Are you sure you want to delete this item?')) return;
+    function confirmDelete(id) {
+        // Set ID yang akan dihapus
+        deleteIdToConfirm = id;
+        // Tampilkan modal konfirmasi dengan callback deleteFurnitureAction
+        showConfirmModal('Are you sure you want to delete this item? This action cannot be undone.', deleteFurnitureAction);
+    }
+    
+    function deleteFurnitureAction(){
+        const id = deleteIdToConfirm;
+        if (!id) return; // safety check
+        
         fetch(`/api/furniture/${id}`, {
             method: 'DELETE',
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json' },
+            // KRITIS: Tambahkan credentials: 'include' untuk otentikasi
+            credentials: 'include'
         })
         .then(async res=>{
             if(res.status === 204 || res.ok){
@@ -586,9 +699,9 @@
                 return;
             }
             const json = await res.json();
-            alert(json.message || 'Failed to delete');
+            showErrorMessage(json.message || 'Failed to delete');
         })
-        .catch(()=> alert('Failed to delete'));
+        .catch(()=> showErrorMessage('Failed to delete item due to network error.'));
     }
 
     /* ===========================
