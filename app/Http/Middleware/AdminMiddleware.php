@@ -10,17 +10,9 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        // Pastikan sudah login
-        if (!Auth::check()) {
+        // Cek apakah admin sudah login (guard admin)
+        if (!Auth::guard('admin')->check()) {
             return redirect()->route('admin.login');
-        }
-
-        // Pastikan role adalah admin
-        if (Auth::user()->role !== 'admin') {
-            Auth::logout();
-            return redirect()->route('admin.login')->withErrors([
-                'email' => 'Anda tidak memiliki akses admin.'
-            ]);
         }
 
         return $next($request);

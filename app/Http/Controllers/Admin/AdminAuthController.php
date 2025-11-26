@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminAuthController extends Controller
 {
-    // Tampilkan form login
+    // Tampilkan form login admin
     public function showLoginForm()
     {
         return view('admin.login');
@@ -22,22 +22,17 @@ class AdminAuthController extends Controller
             'password' => 'required'
         ]);
 
-        // Gunakan guard WEB (session)
+        // Ambil credential
         $credentials = $request->only('email', 'password');
 
-        if (Auth::attempt($credentials)) {
+        // Attempt login pakai guard admin
+        if (Auth::guard('admin')->attempt($credentials)) {
 
-            // Cek apakah usernya admin
-            if (auth()->user()->role !== 'admin') {
-                Auth::logout();
-                return back()->withErrors([
-                    'email' => 'Akses ditolak. Anda bukan admin.'
-                ]);
-            }
-
+            // Sukses login → ke dashboard
             return redirect()->route('admin.dashboard');
         }
 
+        // Login gagal
         return back()->withErrors([
             'email' => 'Email atau password salah.'
         ]);
@@ -46,7 +41,7 @@ class AdminAuthController extends Controller
     // Logout admin
     public function logout()
     {
-        Auth::logout();
+        Auth::guard('admin')->logout();
         return redirect()->route('admin.login');
     }
 }
