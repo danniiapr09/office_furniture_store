@@ -6,35 +6,37 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Furniture;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Database\QueryException;
 
 class FurnitureController extends Controller
 {
     /**
-     * ✅ Ambil semua data furniture
+     * Ambil semua furniture (with pagination + image_url)
      */
     public function index(Request $request)
     {
-        $query = Furniture::with('category');
+        $query = Furniture::query();
 
-        // search by name
-        if($request->has('q') && $request->q){
-            $query->where('name', 'like', '%'.$request->q.'%');
+        if ($request->has('q') && $request->q) {
+            $query->where('nama', 'like', '%' . $request->q . '%');
         }
 
-        // optional filter by category
-        if($request->has('category') && $request->category){
-            $query->where('category_id', $request->category);
+        if ($request->has('category') && $request->category) {
+            $query->where('kategori', $request->category);
         }
 
-        $perPage = 10;
-        $furnitures = $query->orderBy('id','desc')->paginate($perPage);
+        $furnitures = $query->orderBy('id', 'desc')->paginate(10);
+
+        // Tambahkan image_url ke setiap item
+        $furnitures->getCollection()->transform(function ($item) {
+            $item->image_url = $item->image ? asset('storage/' . $item->image) : null;
+            return $item;
+        });
 
         return response()->json($furnitures);
     }
 
     /**
-     * ✅ Ambil data furniture berdasarkan ID
+     * Ambil detail furniture
      */
     public function show($id)
     {
@@ -47,6 +49,8 @@ class FurnitureController extends Controller
             ], 404);
         }
 
+        $furniture->image_url = $furniture->image ? asset('storage/' . $furniture->image) : null;
+
         return response()->json([
             'success' => true,
             'data' => $furniture
@@ -54,7 +58,7 @@ class FurnitureController extends Controller
     }
 
     /**
-     * ✅ Tambah data furniture baru
+     * Tambah furniture baru
      */
     public function store(Request $request)
     {
@@ -67,11 +71,15 @@ class FurnitureController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
+        // Upload image
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('furniture', 'public');
         }
 
         $furniture = Furniture::create($validated);
+
+        // Tambahkan URL absolut
+        $furniture->image_url = $furniture->image ? asset('storage/' . $furniture->image) : null;
 
         return response()->json([
             'success' => true,
@@ -81,7 +89,7 @@ class FurnitureController extends Controller
     }
 
     /**
-     * ✅ Update data furniture
+     * Update furniture
      */
     public function update(Request $request, $id)
     {
@@ -103,7 +111,7 @@ class FurnitureController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // Ganti gambar jika ada file baru
+        // Jika ada file baru, hapus file lama lalu upload
         if ($request->hasFile('image')) {
             if ($furniture->image && Storage::disk('public')->exists($furniture->image)) {
                 Storage::disk('public')->delete($furniture->image);
@@ -113,6 +121,8 @@ class FurnitureController extends Controller
 
         $furniture->update($validated);
 
+        $furniture->image_url = $furniture->image ? asset('storage/' . $furniture->image) : null;
+
         return response()->json([
             'success' => true,
             'message' => 'Data furniture berhasil diupdate!',
@@ -121,7 +131,7 @@ class FurnitureController extends Controller
     }
 
     /**
-     * ✅ Hapus data furniture
+     * Hapus furniture
      */
     public function destroy($id)
     {
@@ -134,6 +144,7 @@ class FurnitureController extends Controller
             ], 404);
         }
 
+        // Hapus gambar
         if ($furniture->image && Storage::disk('public')->exists($furniture->image)) {
             Storage::disk('public')->delete($furniture->image);
         }
