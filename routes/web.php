@@ -9,7 +9,7 @@ Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name(
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
 
 // Semua route di bawah ini hanya bisa diakses admin yang sudah login
-Route::middleware(['web', 'admin'])->group(function () {
+Route::middleware(['admin'])->group(function () {
 
     // Dashboard Admin
     Route::get('/admin/dashboard', function () {
@@ -35,7 +35,7 @@ Route::middleware(['web', 'admin'])->group(function () {
         // Detail user
         Route::get('/{id}', [UserController::class, 'show'])->name('show');
 
-        // Update user (_method=PUT via POST)
+        // Update user
         Route::post('/{id}', [UserController::class, 'update'])->name('update');
 
         // Delete user
