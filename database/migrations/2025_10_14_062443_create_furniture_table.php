@@ -11,22 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('furnitures', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->text('description');
-            $table->integer('price');
-            $table->string('image')->nullable();
-            $table->timestamps();
-        });
+        // Solusi untuk error 'already exists'
+        if (!Schema::hasTable('furnitures')) {
+            Schema::create('furnitures', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->text('description');
+                $table->integer('price');
+                $table->string('image')->nullable();
+                $table->timestamps();
+            });
+        }
     }
-
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('furniture');
+        // Perbaikan penamaan tabel: dari 'furniture' menjadi 'furnitures'
+        Schema::dropIfExists('furnitures');
     }
 };
