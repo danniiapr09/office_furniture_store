@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Database\Seeders\CategorySeeder; // Import CategorySeeder
+use Database\Seeders\CategorySeeder;
+use Database\Seeders\AdminSeeder; // <-- PASTIKAN INI DI-IMPORT
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,25 +14,15 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // ----------------------------------------------------
-        // 1. Panggil Seeder untuk data relasi (Category)
+        // Panggil SEMUA seeder yang dibutuhkan aplikasi.
         // ----------------------------------------------------
         $this->call([
-            CategorySeeder::class, // <-- TAMBAHKAN INI
-        ]);
-
-
-        // ----------------------------------------------------
-        // 2. Buat Data User (Admin atau Test User)
-        // ----------------------------------------------------
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Admin User', // Ganti nama untuk identifikasi mudah
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'), // Tambahkan password agar bisa login
+            CategorySeeder::class, // <-- WAJIB: Untuk mengisi data dropdown
+            AdminSeeder::class,    // <-- WAJIB: Untuk membuat user Admin
+            // Tambahkan seeder lain di sini (misal: FurnitureSeeder, OtherUserSeeder, etc.)
         ]);
         
-        // Catatan: Pastikan Anda memiliki kolom 'is_admin' di tabel 'users' 
-        // dan set nilainya menjadi true jika Anda menggunakan role-based authorization.
+        // Catatan: Kami telah memindahkan logika pembuatan User::factory()->create()
+        // ke dalam AdminSeeder.php agar file ini tetap rapi dan fokus pada panggilan.
     }
 }
