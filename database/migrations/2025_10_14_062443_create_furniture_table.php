@@ -11,17 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Solusi untuk error 'already exists'
-        if (!Schema::hasTable('furnitures')) {
-            Schema::create('furnitures', function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->text('description');
-                $table->integer('price');
-                $table->string('image')->nullable();
-                $table->timestamps();
-            });
-        }
+        // Pastikan tabel categories sudah dibuat SEBELUM tabel furnitures
+        Schema::create('furnitures', function (Blueprint $table) {
+            $table->id();
+            
+            // Kolom Data
+            $table->string('nama');
+            $table->text('deskripsi')->nullable();
+            $table->unsignedBigInteger('category_id'); // Foreign key ke tabel categories
+            $table->integer('harga');
+            $table->integer('stok')->default(0);
+            $table->string('image')->nullable(); // Path gambar
+
+            // Timestamps
+            $table->timestamps();
+
+            // Definisi Foreign Key
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+        });
     }
 
     /**
@@ -29,7 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Perbaikan penamaan tabel: dari 'furniture' menjadi 'furnitures'
         Schema::dropIfExists('furnitures');
     }
 };

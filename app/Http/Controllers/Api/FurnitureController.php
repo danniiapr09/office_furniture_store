@@ -14,14 +14,16 @@ class FurnitureController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Furniture::query();
+        // Eager load relasi category
+        $query = Furniture::with('category'); 
 
         if ($request->has('q') && $request->q) {
             $query->where('nama', 'like', '%' . $request->q . '%');
         }
 
-        if ($request->has('category') && $request->category) {
-            $query->where('kategori', $request->category);
+        // Filter menggunakan category_id, bukan string 'kategori'
+        if ($request->has('category_id') && $request->category_id) {
+            $query->where('category_id', $request->category_id);
         }
 
         $furnitures = $query->orderBy('id', 'desc')->paginate(10);
@@ -32,6 +34,7 @@ class FurnitureController extends Controller
             return $item;
         });
 
+        // Response paginasi standar Laravel sudah cukup
         return response()->json($furnitures);
     }
 
@@ -40,7 +43,8 @@ class FurnitureController extends Controller
      */
     public function show($id)
     {
-        $furniture = Furniture::find($id);
+        // Eager load relasi category untuk detail
+        $furniture = Furniture::with('category')->find($id);
 
         if (!$furniture) {
             return response()->json([
@@ -64,7 +68,7 @@ class FurnitureController extends Controller
     {
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
-            'kategori' => 'required|string|max:100',
+            'category_id' => 'required|integer|exists:categories,id', // Diubah ke ID kategori
             'harga' => 'required|numeric',
             'stok' => 'required|integer',
             'deskripsi' => 'nullable|string',
@@ -73,13 +77,15 @@ class FurnitureController extends Controller
 
         // Upload image
         if ($request->hasFile('image')) {
+            // Karena menggunakan FormData, file akan ada di sini
             $validated['image'] = $request->file('image')->store('furniture', 'public');
         }
 
         $furniture = Furniture::create($validated);
 
-        // Tambahkan URL absolut
+        // Tambahkan URL absolut setelah dibuat
         $furniture->image_url = $furniture->image ? asset('storage/' . $furniture->image) : null;
+        $furniture->load('category'); // Load relasi agar data di response lengkap
 
         return response()->json([
             'success' => true,
@@ -104,7 +110,7 @@ class FurnitureController extends Controller
 
         $validated = $request->validate([
             'nama' => 'sometimes|required|string|max:255',
-            'kategori' => 'sometimes|required|string|max:100',
+            'category_id' => 'sometimes|required|integer|exists:categories,id', // Diubah
             'harga' => 'sometimes|required|numeric',
             'stok' => 'sometimes|required|integer',
             'deskripsi' => 'nullable|string',
@@ -122,6 +128,7 @@ class FurnitureController extends Controller
         $furniture->update($validated);
 
         $furniture->image_url = $furniture->image ? asset('storage/' . $furniture->image) : null;
+        $furniture->load('category'); // Load relasi agar data di response lengkap
 
         return response()->json([
             'success' => true,

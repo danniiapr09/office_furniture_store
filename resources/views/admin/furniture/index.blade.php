@@ -229,31 +229,37 @@
         </div>
         <div class="modal-body">
           <form id="addFurnitureForm">
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+
             <div id="addErrors" class="text-danger small mb-2"></div>
-  
+ 
             <div class="row">
-              <div class="col-md-8 mb-3">
+              <div class="col-md-6 mb-3">
                 <label class="form-label">Name</label>
-                <input type="text" name="name" class="form-control" required>
+                <input type="text" name="nama" class="form-control" required> 
               </div>
-              <div class="col-md-4 mb-3">
+              <div class="col-md-3 mb-3">
                 <label class="form-label">Category</label>
                 <select name="category_id" class="form-select" id="addCategorySelect" required>
                   <option value="">Loading...</option>
                 </select>
               </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Stock</label>
+                <input type="number" name="stok" class="form-control" required>
+              </div>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Price</label>
-              <input type="number" name="price" class="form-control" required>
+              <input type="number" name="harga" class="form-control" required>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Description</label>
-              <textarea name="description" class="form-control" rows="3"></textarea>
+              <textarea name="deskripsi" class="form-control" rows="3"></textarea>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Image</label>
               <input type="file" name="image" class="form-control">
@@ -280,37 +286,42 @@
         <div class="modal-body">
           <form id="editFurnitureForm">
             <input type="hidden" name="id" id="edit_id">
-  
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+
             <div id="editErrors" class="text-danger small mb-2"></div>
-  
+ 
             <div class="row">
-              <div class="col-md-8 mb-3">
+              <div class="col-md-6 mb-3">
                 <label class="form-label">Name</label>
-                <input type="text" name="name" id="edit_name" class="form-control" required>
+                <input type="text" name="nama" id="edit_nama" class="form-control" required>
               </div>
-              <div class="col-md-4 mb-3">
+              <div class="col-md-3 mb-3">
                 <label class="form-label">Category</label>
                 <select name="category_id" class="form-select" id="editCategorySelect" required>
                   <option value="">Loading...</option>
                 </select>
               </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Stock</label>
+                 <input type="number" name="stok" id="edit_stok" class="form-control" required>
+              </div>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Price</label>
-              <input type="number" name="price" id="edit_price" class="form-control" required>
+              <input type="number" name="harga" id="edit_harga" class="form-control" required>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Description</label>
-              <textarea name="description" id="edit_description" class="form-control" rows="3"></textarea>
+              <textarea name="deskripsi" id="edit_deskripsi" class="form-control" rows="3"></textarea>
             </div>
-  
+ 
             <div class="mb-3">
               <label class="form-label">Replace Image (optional)</label>
               <input type="file" name="image" id="edit_image" class="form-control">
             </div>
-  
+ 
             <div id="currentImagePreview" class="mb-3"></div>
           </form>
         </div>
@@ -332,20 +343,15 @@
     ----------------------------*/
     let currentPage = 1;
     let lastPage = 1;
-    let perPage = 10;
     let searchTimeout = null;
     
-    // Pastikan ID input search hanya satu
-    document.getElementById('searchInput').oninput = function() {
-        // Hapus elemen search input yang terulang di HTML asli (col-md-6 kedua)
-    };
-
+    // Helper function
     function qs(id){ return document.getElementById(id); }
     function showError(containerId, message){ qs(containerId).innerHTML = message; }
 
     /* ===========================
     LOAD FURNITURE (with search & pagination)
-    GET /api/furniture?page=...&q=...
+    GET /api/furniture?page=...&q=...&category_id=...
     =========================== */
     function loadFurniture(page = 1) {
         currentPage = page;
@@ -353,30 +359,22 @@
         const categoryId = document.getElementById('filterCategory').value || '';
         const q = encodeURIComponent(document.getElementById('searchInput').value || '');
         
+        // **PERBAIKAN:** Menggunakan category_id di URL
         let url = `/api/furniture?page=${page}&q=${q}`;
         if (categoryId) {
-            url += `&category_id=${categoryId}`;
+            url += `&category_id=${categoryId}`; 
         }
 
         fetch(url)
             .then(async res => {
                 if(!res.ok) throw new Error('Failed to load');
                 const payload = await res.json();
-
-                // Accept either paginated structure or simple array
-                let items = payload.data ?? payload;
-                // when paginated
-                if(payload.meta){
-                    currentPage = payload.meta.current_page;
-                    lastPage = payload.meta.last_page;
-                } else if(payload.last_page){
-                    currentPage = payload.current_page;
-                    lastPage = payload.last_page;
-                } else {
-                    // fallback
-                    currentPage = page;
-                    lastPage = 1;
-                }
+                
+                // Mengambil data dari response paginasi Laravel
+                let items = payload.data ?? [];
+                
+                currentPage = payload.current_page;
+                lastPage = payload.last_page;
 
                 let html = '';
                 if(!items || items.length === 0){
@@ -386,9 +384,9 @@
                         html += `
                             <tr id="row-${item.id}">
                                 <td>${item.id}</td>
-                                <td>${escapeHtml(item.name)}</td>
+                                <td>${escapeHtml(item.nama)}</td>
                                 <td>${escapeHtml(item.category?.name ?? '-')}</td>
-                                <td>Rp ${numberWithCommas(item.price)}</td>
+                                <td>Rp ${numberWithCommas(item.harga)}</td>
                                 <td>
                                     <button class="btn btn-sm btn-warning me-1" onclick="openEditModal(${item.id})"><i class="bi bi-pencil"></i></button>
                                     <button class="btn btn-sm btn-danger" onclick="deleteFurniture(${item.id})"><i class="bi bi-trash"></i></button>
@@ -401,7 +399,7 @@
                 renderPagination();
             })
             .catch(err=>{
-                qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-danger text-center">Error loading data</td></tr>`;
+                qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-danger text-center">Error loading data: ${err.message}</td></tr>`;
             });
     }
 
@@ -428,7 +426,7 @@
         // prev
         if(currentPage > 1) ul.innerHTML += makeItem(currentPage-1, '« Prev');
 
-        // show 1..n (simple)
+        // show 1..n (simple logic)
         let startPage = Math.max(1, currentPage - 2);
         let endPage = Math.min(lastPage, currentPage + 2);
 
@@ -452,8 +450,12 @@
     Load categories (for filter, add & edit)
     =========================== */
     function loadCategoriesFor(selectId, selected = null){
-        fetch('/api/categories')
-            .then(res=>res.json())
+        // **PERBAIKAN:** Pastikan endpoint API kategori ada!
+        fetch('/api/categories') 
+            .then(res=>{
+                if (!res.ok) throw new Error("API not found or failed");
+                return res.json();
+            })
             .then(data=>{
                 let html = '<option value="">-- Select Category --</option>';
                 data.forEach(cat=>{
@@ -461,15 +463,19 @@
                 });
                 qs(selectId).innerHTML = html;
 
-                // Load filter category too
+                // Load filter category too (only once, after loading add form)
                 if (selectId === 'addCategorySelect') {
                     const filterSelect = qs('filterCategory');
                     if (filterSelect) {
+                        // Salin opsi kategori ke filter, pertahankan 'All Categories'
                         filterSelect.innerHTML = `<option value="">All Categories</option>` + html.substring(html.indexOf('>')+1);
                     }
                 }
             })
-            .catch(()=> qs(selectId).innerHTML = '<option value="">Error loading</option>');
+            .catch((e)=> {
+                console.error("Error loading categories:", e);
+                qs(selectId).innerHTML = '<option value="">Error loading</option>';
+            });
     }
     // initial load for add form AND filter dropdown
     loadCategoriesFor('addCategorySelect');
@@ -513,15 +519,22 @@
         fetch(`/api/furniture/${id}`)
             .then(async res=>{
                 if(!res.ok) throw new Error('not found');
-                const item = await res.json();
+                const json = await res.json();
                 
+                // **PERBAIKAN:** Data yang benar ada di json.data
+                const item = json.data;
+                
+                if (!item) throw new Error('Item data not found in response');
+
                 // populate categories first, passing the selected category_id
                 loadCategoriesFor('editCategorySelect', item.category_id);
 
                 qs('edit_id').value = item.id;
-                qs('edit_name').value = item.name ?? '';
-                qs('edit_price').value = item.price ?? '';
-                qs('edit_description').value = item.description ?? '';
+                // **PERBAIKAN:** Menggunakan nama kolom yang benar
+                qs('edit_nama').value = item.nama ?? ''; 
+                qs('edit_harga').value = item.harga ?? '';
+                qs('edit_stok').value = item.stok ?? ''; // Tambah stok
+                qs('edit_deskripsi').value = item.deskripsi ?? '';
                 
                 // show current image preview if exists
                 if(item.image_url){
@@ -536,7 +549,10 @@
                 const modal = new bootstrap.Modal(document.getElementById('editFurnitureModal'));
                 modal.show();
             })
-            .catch(()=> alert('Failed to load item data'));
+            .catch((e)=> {
+                console.error(e);
+                alert('Failed to load item data');
+            });
     }
 
     /* ===========================
@@ -575,7 +591,11 @@
         if(!confirm('Are you sure you want to delete this item?')) return;
         fetch(`/api/furniture/${id}`, {
             method: 'DELETE',
-            headers: { 'Accept': 'application/json' }
+            // Tambahkan CSRF Token
+            headers: { 
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            }
         })
         .then(async res=>{
             if(res.status === 204 || res.ok){
