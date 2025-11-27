@@ -11,23 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Pastikan tabel categories sudah dibuat SEBELUM tabel furnitures
-        Schema::create('furnitures', function (Blueprint $table) {
+        // PERBAIKAN: Ganti 'furnitures' menjadi 'furniture'
+        Schema::create('furniture', function (Blueprint $table) { 
             $table->id();
-            
-            // Kolom Data
+            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->string('nama');
-            $table->text('deskripsi')->nullable();
-            $table->unsignedBigInteger('category_id'); // Foreign key ke tabel categories
-            $table->integer('harga');
-            $table->integer('stok')->default(0);
-            $table->string('image')->nullable(); // Path gambar
-
-            // Timestamps
+            $table->decimal('harga', 10, 2);
+            $table->integer('stok');
+            $table->text('deskripsi');
+            $table->string('image')->nullable();
             $table->timestamps();
-
-            // Definisi Foreign Key
-            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
         });
     }
 
@@ -36,6 +29,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('furnitures');
+        // PERBAIKAN: Ganti 'furnitures' menjadi 'furniture'
+        Schema::dropIfExists('furniture'); 
     }
 };
