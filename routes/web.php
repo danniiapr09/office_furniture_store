@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\UserController;
 
 // Halaman Login Admin
