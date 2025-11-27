@@ -1,28 +1,26 @@
 <?php
 
-namespace App\Http\Controllers\Api; // PASTIKAN NAMESPACE INI BENAR
+namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller; // WAJIB DI IMPORT
+use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Http\Resources\CategoryResource;
-use App\Http\Requests\CategoryStoreRequest;
-use App\Http\Requests\CategoryUpdateRequest;
-use Illuminate\Support\Str; 
+use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function bySlug($slug)
+    /**
+     * Display a listing of the resource.
+     * Endpoint: GET /api/categories
+     * Mengembalikan daftar kategori untuk dropdown.
+     */
+    public function index()
     {
-        $category = Category::where('slug', $slug)->with('furnitures')->first();
-
-        if (!$category) {
-            return response()->json(['message' => 'Kategori tidak ditemukan'], 404);
-        }
-
-        return response()->json([
-            'category' => $category->name,
-            'furnitures' => $category->furnitures
-        ]);
+        // Ambil hanya ID dan nama kategori
+        return response()->json(
+            Category::orderBy('name', 'asc')->get(['id', 'name'])
+        );
     }
 
+    // Tambahkan method lain jika Anda menggunakan Route::apiResource('categories', ...)
+    // Jika tidak, biarkan index() saja untuk memenuhi kebutuhan dropdown
 }
