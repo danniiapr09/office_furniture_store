@@ -49,11 +49,34 @@ Route::middleware(['admin'])->group(function () {
 });
 
 
-// =========================================
-// ============ STORAGE LINK FIX ===========
-// =========================================
+// =================================================================
+// ============== WORKAROUND FIX FOR RAILWAY (404 Error) ===========
+// =================================================================
 
-// Route sementara untuk generate symlink storage di Railway
+// Mencegat permintaan ke /storage/ (yang gagal karena storage:link) dan melayani file secara manual.
+Route::get('/storage/{filename}', function ($filename) {
+    // 1. Cek di dalam folder root public storage (misalnya 'YxXVfyIfWE.jpg')
+    $path = storage_path('app/public/' . $filename);
+
+    if (file_exists($path)) {
+        return response()->file($path);
+    }
+    
+    // 2. Cek di dalam sub-folder furniture (misalnya 'furniture/YxXVfyIfWE.jpg')
+    // Asumsi path database Anda menyimpan 'furniture/namafile.jpg'
+    if (strpos($filename, 'furniture/') === 0) {
+         $subPath = storage_path('app/public/' . $filename);
+         if (file_exists($subPath)) {
+            return response()->file($subPath);
+         }
+    }
+    
+    // Jika file tidak ditemukan, kembalikan 404
+    abort(404);
+
+})->where('filename', '.*'); // Memastikan URL bisa menerima '/' seperti 'furniture/nama.jpg'
+
+// Route /linkstorage Anda dipertahankan, namun Route manual di atas lebih efektif.
 Route::get('/linkstorage', function () {
     Artisan::call('storage:link');
     return 'Storage linked!';
