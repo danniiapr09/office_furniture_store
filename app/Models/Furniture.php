@@ -9,10 +9,13 @@ class Furniture extends Model
 {
     use HasFactory;
 
+    // Tambahkan baris ini untuk menunjuk ke tabel 'furniture' (tunggal)
+    protected $table = 'furniture'; 
+    
     // Kolom disesuaikan agar konsisten dengan Controller dan Migration yang diperbaiki.
     protected $fillable = [
         'nama',
-        'category_id', // Gunakan category_id untuk relasi foreign key
+        'category_id', 
         'harga',
         'stok',
         'deskripsi',
@@ -24,7 +27,6 @@ class Furniture extends Model
      */
     public function category()
     {
-        // Mengasumsikan foreign key-nya adalah 'category_id'
         return $this->belongsTo(Category::class, 'category_id');
     }
 }
