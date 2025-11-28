@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\UserController;
@@ -25,7 +26,7 @@ Route::middleware(['admin'])->group(function () {
     // User Management
     Route::prefix('/admin/users')->name('admin.users.')->group(function () {
 
-        // Menampilkan halaman user
+        // Halaman user
         Route::get('/', function () {
             return view('admin.users.index');
         })->name('index');
@@ -45,4 +46,15 @@ Route::middleware(['admin'])->group(function () {
 
     // Logout Admin
     Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+});
+
+
+// =========================================
+// ============ STORAGE LINK FIX ===========
+// =========================================
+
+// Route sementara untuk generate symlink storage di Railway
+Route::get('/linkstorage', function () {
+    Artisan::call('storage:link');
+    return 'Storage linked!';
 });
