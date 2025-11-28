@@ -17,38 +17,34 @@ class Furniture extends Model
         'harga',
         'stok',
         'deskripsi',
-        'image',
-        'images',
+        'image'
     ];
 
-    protected $casts = [
-        'images' => 'array',
-    ];
-
-    protected $appends = ['image_url', 'images_url'];
+    // Biar image_url ikut dikirim otomatis
+    protected $appends = ['image_url'];
 
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
 
+    /**
+     * Accessor untuk menghasilkan URL gambar FULL.
+     * Tidak memakai /storage karena Railway tidak support storage:link
+     * Folder gambar harus ada di: public/furniture/…
+     */
     public function getImageUrlAttribute()
     {
-        if (!$this->image) return null;
+        if (!$this->image) {
+            return null;
+        }
 
+        // Jika image sudah berupa URL penuh, langsung return
         if (filter_var($this->image, FILTER_VALIDATE_URL)) {
             return $this->image;
         }
 
+        // Return URL file yang ada di public/
         return url($this->image);
-    }
-
-    public function getImagesUrlAttribute()
-    {
-        if (!$this->images) return [];
-
-        return array_map(function ($img) {
-            return url($img);
-        }, $this->images);
     }
 }

@@ -10,22 +10,31 @@ use Illuminate\Support\Facades\Storage;
 class FurnitureController extends Controller
 {
     /**
-     * Ambil semua furniture
+     * Ambil semua furniture (with pagination + image_url)
      */
     public function index(Request $request)
     {
-        $query = Furniture::with('category');
+        // Eager load relasi category
+        $query = Furniture::with('category'); 
 
         if ($request->has('q') && $request->q) {
             $query->where('nama', 'like', '%' . $request->q . '%');
         }
 
+        // Filter menggunakan category_id, bukan string 'kategori'
         if ($request->has('category_id') && $request->category_id) {
             $query->where('category_id', $request->category_id);
         }
 
         $furnitures = $query->orderBy('id', 'desc')->paginate(10);
 
+        // Tambahkan image_url ke setiap item
+        $furnitures->getCollection()->transform(function ($item) {
+            $item->image_url = $item->image ? asset('storage/' . $item->image) : null;
+            return $item;
+        });
+
+        // Response paginasi standar Laravel sudah cukup
         return response()->json($furnitures);
     }
 
@@ -34,6 +43,7 @@ class FurnitureController extends Controller
      */
     public function show($id)
     {
+        // Eager load relasi category untuk detail
         $furniture = Furniture::with('category')->find($id);
 
         if (!$furniture) {
@@ -42,6 +52,8 @@ class FurnitureController extends Controller
                 'message' => 'Data furniture tidak ditemukan'
             ], 404);
         }
+
+        $furniture->image_url = $furniture->image ? asset('storage/' . $furniture->image) : null;
 
         return response()->json([
             'success' => true,
@@ -56,35 +68,24 @@ class FurnitureController extends Controller
     {
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
-            'category_id' => 'required|integer|exists:categories,id',
+            'category_id' => 'required|integer|exists:categories,id', // Diubah ke ID kategori
             'harga' => 'required|numeric',
             'stok' => 'required|integer',
             'deskripsi' => 'nullable|string',
-
-            // Gambar utama
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:4096',
-
-            // Banyak gambar
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:4096'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // UPLOAD GAMBAR UTAMA
+        // Upload image
         if ($request->hasFile('image')) {
+            // Karena menggunakan FormData, file akan ada di sini
             $validated['image'] = $request->file('image')->store('furniture', 'public');
         }
 
-        // UPLOAD MULTIPLE IMAGE
-        $images = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $images[] = $file->store('furniture', 'public');
-            }
-        }
-
-        $validated['images'] = $images;
-
         $furniture = Furniture::create($validated);
-        $furniture->load('category');
+
+        // Tambahkan URL absolut setelah dibuat
+        $furniture->image_url = $furniture->image ? asset('storage/' . $furniture->image) : null;
+        $furniture->load('category'); // Load relasi agar data di response lengkap
 
         return response()->json([
             'success' => true,
@@ -109,37 +110,25 @@ class FurnitureController extends Controller
 
         $validated = $request->validate([
             'nama' => 'sometimes|required|string|max:255',
-            'category_id' => 'sometimes|required|integer|exists:categories,id',
+            'category_id' => 'sometimes|required|integer|exists:categories,id', // Diubah
             'harga' => 'sometimes|required|numeric',
             'stok' => 'sometimes|required|integer',
             'deskripsi' => 'nullable|string',
-
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:4096',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:4096'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // UPDATE GAMBAR UTAMA
+        // Jika ada file baru, hapus file lama lalu upload
         if ($request->hasFile('image')) {
             if ($furniture->image && Storage::disk('public')->exists($furniture->image)) {
                 Storage::disk('public')->delete($furniture->image);
             }
-
             $validated['image'] = $request->file('image')->store('furniture', 'public');
         }
 
-        // ✨ UPDATE MULTIPLE IMAGES (TAMBAH KE ARRAY)
-        if ($request->hasFile('images')) {
-            $newImages = $furniture->images ?? [];
-
-            foreach ($request->file('images') as $file) {
-                $newImages[] = $file->store('furniture', 'public');
-            }
-
-            $validated['images'] = $newImages;
-        }
-
         $furniture->update($validated);
-        $furniture->load('category');
+
+        $furniture->image_url = $furniture->image ? asset('storage/' . $furniture->image) : null;
+        $furniture->load('category'); // Load relasi agar data di response lengkap
 
         return response()->json([
             'success' => true,
@@ -149,7 +138,7 @@ class FurnitureController extends Controller
     }
 
     /**
-     * Hapus furniture + semua gambar
+     * Hapus furniture
      */
     public function destroy($id)
     {
@@ -162,18 +151,9 @@ class FurnitureController extends Controller
             ], 404);
         }
 
-        // Hapus gambar utama
+        // Hapus gambar
         if ($furniture->image && Storage::disk('public')->exists($furniture->image)) {
             Storage::disk('public')->delete($furniture->image);
-        }
-
-        // Hapus semua images[]
-        if ($furniture->images) {
-            foreach ($furniture->images as $img) {
-                if (Storage::disk('public')->exists($img)) {
-                    Storage::disk('public')->delete($img);
-                }
-            }
         }
 
         $furniture->delete();
