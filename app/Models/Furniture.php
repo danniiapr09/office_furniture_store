@@ -10,7 +10,7 @@ class Furniture extends Model
     use HasFactory;
 
     // Tambahkan baris ini untuk menunjuk ke tabel 'furniture' (tunggal)
-    protected $table = 'furniture'; 
+    protected $table = 'furnitures'; 
     
     // Kolom disesuaikan agar konsisten dengan Controller dan Migration yang diperbaiki.
     protected $fillable = [
