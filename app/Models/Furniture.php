@@ -9,24 +9,42 @@ class Furniture extends Model
 {
     use HasFactory;
 
-    // Tambahkan baris ini untuk menunjuk ke tabel 'furniture' (tunggal)
-    protected $table = 'furnitures'; 
-    
-    // Kolom disesuaikan agar konsisten dengan Controller dan Migration yang diperbaiki.
+    protected $table = 'furnitures';
+
     protected $fillable = [
         'nama',
-        'category_id', 
+        'category_id',
         'harga',
         'stok',
         'deskripsi',
         'image'
     ];
 
-    /**
-     * Relasi many-to-one ke Category.
-     */
+    // Biar image_url ikut dikirim otomatis
+    protected $appends = ['image_url'];
+
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    /**
+     * Accessor untuk menghasilkan URL gambar FULL.
+     * Tidak memakai /storage karena Railway tidak support storage:link
+     * Folder gambar harus ada di: public/furniture/…
+     */
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        // Jika image sudah berupa URL penuh, langsung return
+        if (filter_var($this->image, FILTER_VALIDATE_URL)) {
+            return $this->image;
+        }
+
+        // Return URL file yang ada di public/
+        return url($this->image);
     }
 }
