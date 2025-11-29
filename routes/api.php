@@ -26,7 +26,7 @@ Route::post('/login', [AuthController::class, 'login']);
 // POST /api/furniture (Admin Write/Store)
 // PUT/PATCH /api/furniture/{id} (Admin Write/Update)
 // DELETE /api/furniture/{id} (Admin Write/Delete)
-Route::apiResource('furniture', FurnitureController::class);
+Route::apiResource('furnitures', FurnitureController::class);
 
 // Categories API:
 // GET /api/categories (Admin Dropdown & Public Read)
