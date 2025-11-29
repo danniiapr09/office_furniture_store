@@ -98,6 +98,36 @@
              background-color: #E38D2F;
              border-color: #E38D2F;
         }
+
+        /* Custom Modal for Alert */
+        .custom-alert-modal {
+            background: rgba(0,0,0,0.5);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+            transition: opacity 0.3s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .custom-alert-modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .custom-alert-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -220,6 +250,7 @@
     </div>
 </div>
 
+<!-- Modal ADD Furniture -->
 <div class="modal fade" id="addFurnitureModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -276,6 +307,7 @@
     </div>
 </div>
 
+<!-- Modal EDIT Furniture -->
 <div class="modal fade" id="editFurnitureModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -303,7 +335,7 @@
               </div>
               <div class="col-md-3 mb-3">
                 <label class="form-label">Stock</label>
-                 <input type="number" name="stok" id="edit_stok" class="form-control" required>
+                   <input type="number" name="stok" id="edit_stok" class="form-control" required>
               </div>
             </div>
  
@@ -335,6 +367,15 @@
     </div>
 </div>
 
+<!-- Custom Alert/Confirmation Modal -->
+<div class="custom-alert-modal" id="customAlertModal">
+    <div class="custom-alert-content">
+        <p id="customAlertMessage"></p>
+        <button id="customAlertOkBtn" class="btn btn-primary btn-sm me-2">OK</button>
+        <button id="customAlertCancelBtn" class="btn btn-secondary btn-sm" style="display: none;">Cancel</button>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -350,8 +391,56 @@
     function showError(containerId, message){ qs(containerId).innerHTML = message; }
 
     /* ===========================
+    CUSTOM ALERT/CONFIRMATION REPLACEMENT
+    =========================== */
+    let resolveCustomAlert;
+    function customAlert(message) {
+        return new Promise(resolve => {
+            resolveCustomAlert = resolve;
+            qs('customAlertMessage').innerText = message;
+            qs('customAlertCancelBtn').style.display = 'none';
+            qs('customAlertModal').classList.add('show');
+            
+            const handleOk = () => {
+                qs('customAlertModal').classList.remove('show');
+                qs('customAlertOkBtn').removeEventListener('click', handleOk);
+                resolve(true);
+            };
+            qs('customAlertOkBtn').addEventListener('click', handleOk);
+        });
+    }
+
+    function customConfirm(message) {
+        return new Promise(resolve => {
+            resolveCustomAlert = resolve;
+            qs('customAlertMessage').innerText = message;
+            qs('customAlertCancelBtn').style.display = 'inline-block';
+            qs('customAlertModal').classList.add('show');
+
+            const handleOk = () => {
+                cleanup();
+                resolve(true);
+            };
+            const handleCancel = () => {
+                cleanup();
+                resolve(false);
+            };
+
+            const cleanup = () => {
+                qs('customAlertModal').classList.remove('show');
+                qs('customAlertOkBtn').removeEventListener('click', handleOk);
+                qs('customAlertCancelBtn').removeEventListener('click', handleCancel);
+            }
+
+            qs('customAlertOkBtn').addEventListener('click', handleOk);
+            qs('customAlertCancelBtn').addEventListener('click', handleCancel);
+        });
+    }
+
+
+    /* ===========================
     LOAD FURNITURE (with search & pagination)
-    GET /api/furniture?page=...&q=...&category_id=...
+    GET /api/furnitures?page=...&q=...&category_id=...
     =========================== */
     function loadFurniture(page = 1) {
         currentPage = page;
@@ -359,22 +448,38 @@
         const categoryId = document.getElementById('filterCategory').value || '';
         const q = encodeURIComponent(document.getElementById('searchInput').value || '');
         
-        // **PERBAIKAN:** Menggunakan category_id di URL
-        let url = `/api/furniture?page=${page}&q=${q}`;
+        // **PERBAIKAN URL: Menggunakan 'furnitures' (plural) sesuai dengan routes/api.php**
+        let url = `/api/furnitures?page=${page}&q=${q}`;
         if (categoryId) {
             url += `&category_id=${categoryId}`; 
         }
+        
+        // Hapus header/token untuk GET public, kecuali jika CRUD di route admin di-protect
+        // Jika Anda menggunakan middleware auth:sanctum di routes/api.php, tambahkan header:
+        /*
+        const token = 'YOUR_SANCTUM_TOKEN'; // Ganti dengan token yang sebenarnya
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        */
 
         fetch(url)
             .then(async res => {
                 if(!res.ok) throw new Error('Failed to load');
-                const payload = await res.json();
+                // Asumsi response adalah payload paginasi Laravel
+                const payload = await res.json(); 
                 
-                // Mengambil data dari response paginasi Laravel
-                let items = payload.data ?? [];
+                // Mengambil data dari response paginasi Laravel (jika menggunakan resource)
+                // Jika FurnitureController menggunakan FurnitureResource::collection(paginate), data ada di .data
+                let items = payload.data ?? []; 
                 
-                currentPage = payload.current_page;
-                lastPage = payload.last_page;
+                // Jika FurnitureController menggunakan $furniture->paginate() tanpa resource, data ada di .data
+                if (!items.length && payload.data?.data) {
+                    items = payload.data.data;
+                    currentPage = payload.data.current_page;
+                    lastPage = payload.data.last_page;
+                } else {
+                    currentPage = payload.current_page;
+                    lastPage = payload.last_page;
+                }
 
                 let html = '';
                 if(!items || items.length === 0){
@@ -399,6 +504,7 @@
                 renderPagination();
             })
             .catch(err=>{
+                console.error("Fetch error:", err);
                 qs('furniture-table').innerHTML = `<tr><td colspan="5" class="text-danger text-center">Error loading data: ${err.message}</td></tr>`;
             });
     }
@@ -418,13 +524,13 @@
         if(lastPage <= 1) return;
 
         const makeItem = (p, text, active=false) => {
-            return `<li class="page-item ${active ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="loadFurniture(${p});return false;">${text}</a>
+            return `<li class="page-item ${active ? 'active' : ''} ${p < 1 || p > lastPage ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="${p >= 1 && p <= lastPage ? `loadFurniture(${p});return false;` : 'return false;'}">${text}</a>
                     </li>`;
         };
 
         // prev
-        if(currentPage > 1) ul.innerHTML += makeItem(currentPage-1, '« Prev');
+        ul.innerHTML += makeItem(currentPage-1, '« Prev');
 
         // show 1..n (simple logic)
         let startPage = Math.max(1, currentPage - 2);
@@ -443,22 +549,24 @@
 
 
         // next
-        if(currentPage < lastPage) ul.innerHTML += makeItem(currentPage+1, 'Next »');
+        ul.innerHTML += makeItem(currentPage+1, 'Next »');
     }
 
     /* ===========================
     Load categories (for filter, add & edit)
     =========================== */
     function loadCategoriesFor(selectId, selected = null){
-        // **PERBAIKAN:** Pastikan endpoint API kategori ada!
+        // **PERBAIKAN: Endpoint kategori sudah benar /api/categories**
         fetch('/api/categories') 
             .then(res=>{
                 if (!res.ok) throw new Error("API not found or failed");
                 return res.json();
             })
             .then(data=>{
+                // Jika response adalah resource collection tanpa paginasi, data mungkin langsung array, atau di dalam .data jika menggunakan CategoryResource::collection
+                const categories = data.data || data; 
                 let html = '<option value="">-- Select Category --</option>';
-                data.forEach(cat=>{
+                categories.forEach(cat=>{
                     html += `<option value="${cat.id}" ${selected && selected==cat.id ? 'selected':''}>${escapeHtml(cat.name)}</option>`;
                 });
                 qs(selectId).innerHTML = html;
@@ -489,10 +597,12 @@
         const form = qs('addFurnitureForm');
         const fd = new FormData(form);
 
-        fetch('/api/furniture', {
+        // **PERBAIKAN URL: Menggunakan 'furnitures' (plural)**
+        fetch('/api/furnitures', {
             method: 'POST',
             body: fd,
-            headers: { 'Accept': 'application/json' }
+            // Penting: Jangan atur Content-Type: multipart/form-data. Browser akan mengaturnya otomatis dengan boundary ketika menggunakan FormData.
+            headers: { 'Accept': 'application/json' } 
         })
         .then(async res=>{
             const json = await res.json();
@@ -506,23 +616,27 @@
             // Load data ke halaman 1 setelah berhasil menambah
             loadFurniture(1); 
         })
-        .catch(()=> showError('addErrors','Failed to create item'));
+        .catch((e)=> {
+            console.error("Create error:", e);
+            showError('addErrors','Failed to create item');
+        });
     }
 
     /* ===========================
     OPEN EDIT MODAL (populate)
-    GET /api/furniture/{id}
+    GET /api/furnitures/{id}
     =========================== */
     function openEditModal(id){
         showError('editErrors','');
         
-        fetch(`/api/furniture/${id}`)
+        // **PERBAIKAN URL: Menggunakan 'furnitures' (plural)**
+        fetch(`/api/furnitures/${id}`) 
             .then(async res=>{
                 if(!res.ok) throw new Error('not found');
                 const json = await res.json();
                 
-                // **PERBAIKAN:** Data yang benar ada di json.data
-                const item = json.data;
+                // **PERBAIKAN: Mengambil data yang benar (langsung dari root jika tanpa resource, atau dari .data jika pakai resource)**
+                const item = json.data || json; 
                 
                 if (!item) throw new Error('Item data not found in response');
 
@@ -530,10 +644,10 @@
                 loadCategoriesFor('editCategorySelect', item.category_id);
 
                 qs('edit_id').value = item.id;
-                // **PERBAIKAN:** Menggunakan nama kolom yang benar
+                // **PERBAIKAN: Menggunakan nama kolom yang benar (nama, harga, stok, deskripsi)**
                 qs('edit_nama').value = item.nama ?? ''; 
                 qs('edit_harga').value = item.harga ?? '';
-                qs('edit_stok').value = item.stok ?? ''; // Tambah stok
+                qs('edit_stok').value = item.stok ?? ''; 
                 qs('edit_deskripsi').value = item.deskripsi ?? '';
                 
                 // show current image preview if exists
@@ -551,7 +665,7 @@
             })
             .catch((e)=> {
                 console.error(e);
-                alert('Failed to load item data');
+                customAlert('Failed to load item data'); // Ganti alert
             });
     }
 
@@ -563,10 +677,18 @@
         const form = qs('editFurnitureForm');
         const id = qs('edit_id').value;
         const fd = new FormData(form);
-        fd.append('_method', 'PUT'); // method override for Laravel
+        
+        // Laravel hanya bisa menerima PUT/PATCH dengan file upload jika method request adalah POST
+        fd.append('_method', 'POST'); 
+        
+        // Cek apakah ada file baru yang diupload, jika tidak hapus dari FormData
+        if (!qs('edit_image').files.length) {
+             fd.delete('image');
+        }
 
-        fetch(`/api/furniture/${id}`, {
-            method: 'POST', // use POST with _method=PUT to support multipart
+        // **PERBAIKAN URL: Menggunakan 'furnitures' (plural)**
+        fetch(`/api/furnitures/${id}`, {
+            method: 'POST', // Gunakan POST karena ada _method override
             body: fd,
             headers: { 'Accept': 'application/json' }
         })
@@ -581,20 +703,27 @@
             document.querySelector('#editFurnitureModal .btn-close').click();
             loadFurniture(currentPage);
         })
-        .catch(()=> showError('editErrors','Failed to update item'));
+        .catch((e)=> {
+            console.error("Update error:", e);
+            showError('editErrors','Failed to update item');
+        });
     }
 
     /* ===========================
     DELETE FURNITURE
     =========================== */
-    function deleteFurniture(id){
-        if(!confirm('Are you sure you want to delete this item?')) return;
-        fetch(`/api/furniture/${id}`, {
+    async function deleteFurniture(id){
+        const confirmed = await customConfirm('Are you sure you want to delete this item?'); // Ganti confirm()
+        if(!confirmed) return;
+        
+        // **PERBAIKAN URL: Menggunakan 'furnitures' (plural)**
+        fetch(`/api/furnitures/${id}`, {
             method: 'DELETE',
             // Tambahkan CSRF Token
             headers: { 
                 'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                // Mengambil token dari input hidden di form manapun (misal form add)
+                'X-CSRF-TOKEN': document.querySelector('#addFurnitureForm input[name="_token"]').value
             }
         })
         .then(async res=>{
@@ -606,9 +735,12 @@
                 return;
             }
             const json = await res.json();
-            alert(json.message || 'Failed to delete');
+            customAlert(json.message || 'Failed to delete'); // Ganti alert
         })
-        .catch(()=> alert('Failed to delete'));
+        .catch((e)=> {
+            console.error("Delete error:", e);
+            customAlert('Failed to delete'); // Ganti alert
+        });
     }
 
     /* ===========================
@@ -627,7 +759,7 @@
     }
 
     function numberWithCommas(x){
-        if(x===null || x===undefined) return '-';
+        if(x===null || x===undefined) return '0';
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
