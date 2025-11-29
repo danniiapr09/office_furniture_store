@@ -129,7 +129,8 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/admin/furniture">
+                <!-- PERBAIKAN: Mengubah /admin/furniture menjadi /admin/furnitures -->
+                <a class="nav-link" href="/admin/furnitures">
                     <i class="bi bi-box-seam-fill"></i> Manage Furniture
                 </a>
             </li>
@@ -165,6 +166,7 @@
         <header id="top-header" class="d-flex justify-content-between align-items-center">
             <div class="welcome-text">
                 Welcome back, 
+                <!-- Ini adalah Blade syntax, asumsikan auth('admin')->user() tersedia -->
                 <span class="text-primary">{{ auth('admin')->user()->name }}</span> 👋
             </div>
             <nav aria-label="breadcrumb">
@@ -234,7 +236,8 @@
             <h2 class="mt-4 mb-3">Quick Navigation</h2>
             <div class="row">
                 <div class="col-md-6 mb-4">
-                    <a href="/admin/furniture" class="text-decoration-none">
+                    <!-- PERBAIKAN: Mengubah /admin/furniture menjadi /admin/furnitures -->
+                    <a href="/admin/furnitures" class="text-decoration-none">
                         <div class="card h-100 shadow-sm border-start border-5" style="border-color: var(--primary-color) !important;">
                             <div class="card-body">
                                 <div class="d-flex align-items-center">
