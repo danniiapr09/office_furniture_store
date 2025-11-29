@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\FurnitureController; // <--- BARIS BARU: Import Controller Furniture
 
 // Halaman Login Admin
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -18,10 +19,20 @@ Route::middleware(['admin'])->group(function () {
         return view('admin.dashboard');
     })->name('admin.dashboard');
 
-    // Furniture Management
-    Route::get('/admin/furniture', function () {
-        return view('admin.furniture.index');
-    })->name('admin.furniture.index');
+    // =====================================================
+    // Furniture Management (SUDAH DIPERBAIKI)
+    // =====================================================
+    Route::prefix('/admin/furnitures')->name('admin.furnitures.')->group(function () { // <--- PLURAL: Mengubah 'furniture' ke 'furnitures'
+        
+        // Halaman Index (Hanya mengembalikan view, seperti yang Anda inginkan)
+        Route::get('/', function () {
+            return view('admin.furniture.index');
+        })->name('index'); // admin.furnitures.index
+
+        // ENDPOINT AJAX UNTUK MENGAMBIL DATA LIST (KRITIS)
+        Route::get('/list', [FurnitureController::class, 'index'])->name('list'); // admin.furnitures.list
+    });
+    // Jika Anda ingin CRUD lengkap (Add/Edit/Delete), gunakan Route::resource!
 
     // User Management
     Route::prefix('/admin/users')->name('admin.users.')->group(function () {
@@ -65,10 +76,10 @@ Route::get('/storage/{filename}', function ($filename) {
     // 2. Cek di dalam sub-folder furniture (misalnya 'furniture/YxXVfyIfWE.jpg')
     // Asumsi path database Anda menyimpan 'furniture/namafile.jpg'
     if (strpos($filename, 'furniture/') === 0) {
-         $subPath = storage_path('app/public/' . $filename);
-         if (file_exists($subPath)) {
+        $subPath = storage_path('app/public/' . $filename);
+        if (file_exists($subPath)) {
             return response()->file($subPath);
-         }
+        }
     }
     
     // Jika file tidak ditemukan, kembalikan 404
