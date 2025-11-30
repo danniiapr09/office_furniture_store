@@ -15,7 +15,10 @@ class Order extends Model
         'total_amount', 
         'status', 
         'shipping_address',
-        // Tambahkan kolom lain jika ada (misalnya: shipping_cost, payment_method)
+        // --- TAMBAHAN KRUSIAL UNTUK FIX BUG 500 ---
+        'contact_phone',
+        'shipping_method',
+        'payment_method',
     ];
 
     /**
