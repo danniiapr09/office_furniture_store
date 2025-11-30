@@ -10,7 +10,7 @@ use App\Models\Furniture;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Log; // <-- PERBAIKAN: Import Log Facade
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -23,6 +23,10 @@ class OrderController extends Controller
     {
         $userId = auth()->id();
 
+        if (!$userId) {
+            return response()->json(['message' => 'Tidak terautentikasi.'], 401);
+        }
+        
         // Ambil semua pesanan pengguna, urutkan dari yang terbaru
         $orders = Order::where('user_id', $userId)
                         // Load relasi items dan payment untuk efisiensi
@@ -45,6 +49,10 @@ class OrderController extends Controller
     public function show($id)
     {
         $userId = auth()->id();
+
+        if (!$userId) {
+            return response()->json(['message' => 'Tidak terautentikasi.'], 401);
+        }
 
         // Cari pesanan berdasarkan ID dan pastikan dimiliki oleh user yang bersangkutan
         $order = Order::where('id', $id)
@@ -70,6 +78,14 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
+        $userId = auth()->id(); 
+        
+        // <-- PERBAIKAN KRUSIAL: Verifikasi User ID
+        if (!$userId) {
+            Log::warning('Order creation failed: User not authenticated.');
+            return response()->json(['message' => 'Anda harus login untuk membuat pesanan.'], 403);
+        }
+
         // 1. Validasi Input
         $validator = Validator::make($request->all(), [
             'shipping_address' => 'required|string|max:500',
@@ -87,9 +103,7 @@ class OrderController extends Controller
 
         $validated = $validator->validated();
         $totalAmount = 0;
-        $userId = auth()->id(); 
         
-        // <-- BARU: Log upaya pembuatan pesanan sebelum transaksi dimulai
         Log::info('Order Creation Attempt', ['user_id' => $userId, 'payload' => $validated]);
 
 
@@ -103,7 +117,6 @@ class OrderController extends Controller
                     $furniture = $furnitures->get($item['furniture_id']);
 
                     if (!$furniture) {
-                        // Ini akan membatalkan transaksi dan dilempar ke catch di bawah
                         throw new \Exception("Furnitur dengan ID {$item['furniture_id']} tidak ditemukan.");
                     }
 
@@ -139,7 +152,6 @@ class OrderController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            // <-- PERBAIKAN: Gunakan Log Facade yang sudah di-import, tambahkan trace
             Log::error('Order creation failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user_id' => $userId,
@@ -148,7 +160,7 @@ class OrderController extends Controller
             
             return response()->json([
                 'message' => 'Gagal membuat pesanan. Silakan coba lagi.',
-                'error_detail' => $e->getMessage() // Detail error untuk debugging
+                'error_detail' => $e->getMessage()
             ], 500);
         }
     }
