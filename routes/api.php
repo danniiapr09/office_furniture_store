@@ -5,8 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\FurnitureController;
-use App\Http\Controllers\Api\OrderController;    // <-- BARU: Import Order Controller
-use App\Http\Controllers\Api\PaymentController;  // <-- BARU: Import Payment Controller
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentController;
 
 
 // ----------------------------------------------------------------------------------
@@ -19,7 +19,6 @@ Route::post('/login', [AuthController::class, 'login']);
 // ----------------------------------------------------------------------------------
 // 2. ADMIN CRUD & PUBLIC READ API
 // ----------------------------------------------------------------------------------
-
 // Furniture API:
 Route::apiResource('furnitures', FurnitureController::class);
 
@@ -30,7 +29,6 @@ Route::get('categories/{id}', [CategoryController::class, 'show']);
 
 // ----------------------------------------------------------------------------------
 // 3. USER API (Mobile/SPA Protected by Sanctum Token)
-//    - Hanya user yang login (dengan token) yang bisa mengakses.
 // ----------------------------------------------------------------------------------
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -40,15 +38,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/user/upload-photo', [AuthController::class, 'uploadPhoto']);
 
-    // Rute Pesanan (Cart & Checkout) <-- BARU DITAMBAH
+    // Rute Pesanan (Cart & Checkout)
     Route::post('/orders', [OrderController::class, 'store']);
     Route::post('/payments/initiate', [PaymentController::class, 'initiate']); 
     
-    // Rute Tambahan yang hanya bisa diakses user (Contoh: Cart, Checkout)
-    // ...
+    // Rute History Pesanan & Detail Pesanan <-- BARU DITAMBAH
+    Route::apiResource('orders', OrderController::class)->only(['index', 'show']);
 
     // Ping test
     Route::get('/ping', function () {
         return response()->json(['message' => 'API connected ✅']);
     });
 });
+
+// ----------------------------------------------------------------------------------
+// 4. PAYMENT GATEWAY WEBHOOK (Public Access for Midtrans/Xendit to send status update)
+// ----------------------------------------------------------------------------------
+
+// Route ini harus diakses PUBLIK (di luar auth:sanctum)
+Route::post('/payments/webhook', [PaymentController::class, 'handleWebhook']);
