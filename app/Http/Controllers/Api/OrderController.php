@@ -71,7 +71,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Membuat Pesanan Baru dari Data Keranjang (Metode yang sudah kita buat).
+     * Membuat Pesanan Baru dari Data Keranjang.
      * Endpoint: POST /api/orders
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
@@ -80,15 +80,17 @@ class OrderController extends Controller
     {
         $userId = auth()->id(); 
         
-        // <-- PERBAIKAN KRUSIAL: Verifikasi User ID
         if (!$userId) {
             Log::warning('Order creation failed: User not authenticated.');
             return response()->json(['message' => 'Anda harus login untuk membuat pesanan.'], 403);
         }
 
-        // 1. Validasi Input
+        // 1. Validasi Input (DITAMBAH: contact_phone, shipping_method, payment_method)
         $validator = Validator::make($request->all(), [
             'shipping_address' => 'required|string|max:500',
+            'contact_phone' => 'required|string|max:15', // Ditambahkan
+            'shipping_method' => 'required|string|max:50', // Ditambahkan
+            'payment_method' => 'required|string|max:50', // Ditambahkan
             'items' => 'required|array|min:1', 
             'items.*.furniture_id' => 'required|integer|exists:furnitures,id', 
             'items.*.quantity' => 'required|integer|min:1',
@@ -110,6 +112,7 @@ class OrderController extends Controller
         try {
             $order = DB::transaction(function () use ($validated, $userId, &$totalAmount) {
                 $orderItemsData = [];
+                // Mengambil semua harga furnitur dalam satu query
                 $furnitureIds = collect($validated['items'])->pluck('furniture_id')->unique(); 
                 $furnitures = Furniture::whereIn('id', $furnitureIds)->get()->keyBy('id'); 
 
@@ -128,15 +131,19 @@ class OrderController extends Controller
                         'furniture_id' => $furniture->id,
                         'quantity' => $item['quantity'],
                         'price_per_unit' => $price,
+                        // Pastikan OrderItem Model juga memiliki $fillable yang lengkap
                     ]);
                 }
 
-                // Buat Entri Order Utama
+                // Buat Entri Order Utama (DITAMBAH: contact_phone, shipping_method, payment_method)
                 $order = Order::create([
                     'user_id' => $userId,
                     'total_amount' => $totalAmount,
                     'status' => 'Pending', 
                     'shipping_address' => $validated['shipping_address'],
+                    'contact_phone' => $validated['contact_phone'],     // Ditambahkan
+                    'shipping_method' => $validated['shipping_method'], // Ditambahkan
+                    'payment_method' => $validated['payment_method'],   // Ditambahkan
                 ]);
 
                 // Masukkan Detail Item ke Order
@@ -152,14 +159,16 @@ class OrderController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
+            // Log detail error ke file log Laravel
             Log::error('Order creation failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user_id' => $userId,
                 'payload' => $validated,
             ]);
             
+            // Mengembalikan pesan error umum ke frontend
             return response()->json([
-                'message' => 'Gagal membuat pesanan. Silakan coba lagi.',
+                'message' => 'Gagal memproses checkout: Exception: Failed to create order: Gagal membuat pesanan. Silakan coba lagi.',
                 'error_detail' => $e->getMessage()
             ], 500);
         }
