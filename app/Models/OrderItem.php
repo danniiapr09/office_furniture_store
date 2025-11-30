@@ -9,10 +9,11 @@ class OrderItem extends Model
 {
     use HasFactory;
 
+    // Pastikan SEMUA kolom yang digunakan di OrderController@store ada di sini
     protected $fillable = [
-        'order_id',
+        'order_id', 
         'furniture_id', // DIUBAH: merujuk ke tabel furnitures
-        'quantity',
+        'quantity', 
         'price_per_unit',
     ];
 
