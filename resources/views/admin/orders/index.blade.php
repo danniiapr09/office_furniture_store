@@ -1,8 +1,14 @@
-@extends('admin.layouts.app') 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Pesanan - Admin</title>
+    <!-- Asumsi Anda menggunakan Tailwind CSS (untuk styling) -->
+    <script src="https://cdn.tailwindcss.com"></script> 
+</head>
+<body class="bg-gray-100">
 
-@section('title', 'Manajemen Pesanan')
-
-@section('content')
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6 text-gray-800">Daftar Pesanan Pelanggan</h1>
 
@@ -54,7 +60,7 @@
                             {{ $order->created_at->format('d M Y H:i') }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="{{ route('orders.show', $order->id) }}" class="text-indigo-600 hover:text-indigo-900 transition duration-150">
+                            <a href="{{ route('admin.orders.show', $order->id) }}" class="text-indigo-600 hover:text-indigo-900 transition duration-150">
                                 Detail
                             </a>
                         </td>
@@ -75,4 +81,6 @@
         </div>
     </div>
 </div>
-@endsection
+
+</body>
+</html>
