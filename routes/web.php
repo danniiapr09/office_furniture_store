@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\FurnitureController; // <--- BARIS BARU: Import Controller Furniture
+use App\Http\Controllers\Admin\FurnitureController; 
+use App\Http\Controllers\Admin\OrderController as AdminOrderController; // <-- BARU DITAMBAH: Import Order Controller
 
 // Halaman Login Admin
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -22,7 +23,7 @@ Route::middleware(['admin'])->group(function () {
     // =====================================================
     // Furniture Management (SUDAH DIPERBAIKI)
     // =====================================================
-    Route::prefix('/admin/furnitures')->name('admin.furnitures.')->group(function () { // <--- PLURAL: Mengubah 'furniture' ke 'furnitures'
+    Route::prefix('/admin/furnitures')->name('admin.furnitures.')->group(function () { 
         
         // Halaman Index (Hanya mengembalikan view, seperti yang Anda inginkan)
         Route::get('/', function () {
@@ -33,6 +34,12 @@ Route::middleware(['admin'])->group(function () {
         Route::get('/list', [FurnitureController::class, 'index'])->name('list'); // admin.furnitures.list
     });
     // Jika Anda ingin CRUD lengkap (Add/Edit/Delete), gunakan Route::resource!
+    
+    // =====================================================
+    // Order Management (PESANAN) <-- BARU DITAMBAHKAN
+    // =====================================================
+    // Rute Pesanan untuk Admin Panel (index: Daftar, show: Detail)
+    Route::resource('orders', AdminOrderController::class)->only(['index', 'show']);
 
     // User Management
     Route::prefix('/admin/users')->name('admin.users.')->group(function () {
