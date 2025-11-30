@@ -10,10 +10,20 @@ return new class extends Migration
     {
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained()->onDelete('cascade'); // FK ke tabel orders
-            $table->foreignId('furniture_id')->constrained()->onDelete('cascade'); // FK ke tabel products
+
+            // FK ke tabel orders
+            $table->foreignId('order_id')
+                  ->constrained()
+                  ->onDelete('cascade');
+
+            // FIX: sesuaikan dengan nama tabel 'furniture'
+            $table->foreignId('furniture_id')
+                  ->constrained('furniture')
+                  ->onDelete('cascade');
+
             $table->integer('quantity');
-            $table->decimal('price_per_unit', 10, 2); // Harga produk saat pesanan dibuat (Penting!)
+            $table->decimal('price_per_unit', 10, 2);
+
             $table->timestamps();
         });
     }
