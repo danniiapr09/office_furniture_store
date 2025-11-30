@@ -6,7 +6,7 @@ use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\FurnitureController; 
-use App\Http\Controllers\Admin\OrderController as AdminOrderController; // <-- BARU DITAMBAH: Import Order Controller
+use App\Http\Controllers\Admin\OrderController as AdminOrderController; // <-- BARU: Import Order Controller
 
 // Halaman Login Admin
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -33,14 +33,16 @@ Route::middleware(['admin'])->group(function () {
         // ENDPOINT AJAX UNTUK MENGAMBIL DATA LIST (KRITIS)
         Route::get('/list', [FurnitureController::class, 'index'])->name('list'); // admin.furnitures.list
     });
-    // Jika Anda ingin CRUD lengkap (Add/Edit/Delete), gunakan Route::resource!
-    
+
     // =====================================================
     // Order Management (PESANAN) <-- BARU DITAMBAHKAN
     // =====================================================
-    // Rute Pesanan untuk Admin Panel (index: Daftar, show: Detail)
-    Route::resource('orders', AdminOrderController::class)->only(['index', 'show']);
-
+    // Memperbaiki 404: Menggunakan path eksplisit 'admin/orders'
+    Route::resource('admin/orders', AdminOrderController::class)->only(['index', 'show'])->names([
+        'index' => 'admin.orders.index',
+        'show' => 'admin.orders.show',
+    ]);
+    
     // User Management
     Route::prefix('/admin/users')->name('admin.users.')->group(function () {
 
