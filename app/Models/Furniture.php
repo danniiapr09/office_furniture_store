@@ -21,7 +21,7 @@ class Furniture extends Model
     ];
 
     // Biar image_url ikut dikirim otomatis
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'harga_int'];
 
     public function category()
     {
@@ -30,8 +30,8 @@ class Furniture extends Model
 
     /**
      * Accessor untuk menghasilkan URL gambar FULL.
-     * Tidak memakai /storage karena Railway tidak support storage:link
-     * Folder gambar harus ada di: public/furniture/…
+     * Tidak memakai /storage karena Railway tidak support storage:link.
+     * Folder gambar harus ada di: public/furniture/… atau public/uploads/…
      */
     public function getImageUrlAttribute()
     {
@@ -44,7 +44,23 @@ class Furniture extends Model
             return $this->image;
         }
 
+        // Pastikan tidak double slash
+        $path = ltrim($this->image, '/');
+
         // Return URL file yang ada di public/
-        return url($this->image);
+        return url($path);
+    }
+
+    /**
+     * Convert harga ke integer agar Flutter tidak error saat parsing
+     */
+    public function getHargaIntAttribute()
+    {
+        if ($this->harga === null) {
+            return 0;
+        }
+
+        // Convert harga apapun jenisnya (string/float/int)
+        return (int) floatval($this->harga);
     }
 }
