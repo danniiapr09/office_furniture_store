@@ -85,12 +85,14 @@ class OrderController extends Controller
             return response()->json(['message' => 'Anda harus login untuk membuat pesanan.'], 403);
         }
 
-        // 1. Validasi Input (DITAMBAH: contact_phone, shipping_method, payment_method)
+        // 1. Validasi Input 
+        // NOTE: Mengubah 'required' menjadi 'nullable' untuk contact_phone, shipping_method, dan payment_method 
+        // jika data tersebut belum dikirim dari frontend Flutlab.
         $validator = Validator::make($request->all(), [
             'shipping_address' => 'required|string|max:500',
-            'contact_phone' => 'required|string|max:15', // Ditambahkan
-            'shipping_method' => 'required|string|max:50', // Ditambahkan
-            'payment_method' => 'required|string|max:50', // Ditambahkan
+            'contact_phone' => 'nullable|string|max:15', // Diubah dari 'required'
+            'shipping_method' => 'nullable|string|max:50', // Diubah dari 'required'
+            'payment_method' => 'nullable|string|max:50', // Diubah dari 'required'
             'items' => 'required|array|min:1', 
             'items.*.furniture_id' => 'required|integer|exists:furnitures,id', 
             'items.*.quantity' => 'required|integer|min:1',
@@ -135,15 +137,16 @@ class OrderController extends Controller
                     ]);
                 }
 
-                // Buat Entri Order Utama (DITAMBAH: contact_phone, shipping_method, payment_method)
+                // Buat Entri Order Utama
                 $order = Order::create([
                     'user_id' => $userId,
                     'total_amount' => $totalAmount,
                     'status' => 'Pending', 
                     'shipping_address' => $validated['shipping_address'],
-                    'contact_phone' => $validated['contact_phone'],     // Ditambahkan
-                    'shipping_method' => $validated['shipping_method'], // Ditambahkan
-                    'payment_method' => $validated['payment_method'],   // Ditambahkan
+                    // Karena diubah menjadi nullable, kita bisa menggunakan operator null coalescing
+                    'contact_phone' => $validated['contact_phone'] ?? null,     
+                    'shipping_method' => $validated['shipping_method'] ?? 'JNE Reguler', // Default value
+                    'payment_method' => $validated['payment_method'] ?? 'COD',   // Default value
                 ]);
 
                 // Masukkan Detail Item ke Order
