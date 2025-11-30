@@ -10,6 +10,7 @@ use App\Models\Furniture;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log; // <-- PERBAIKAN: Import Log Facade
 
 class OrderController extends Controller
 {
@@ -87,6 +88,10 @@ class OrderController extends Controller
         $validated = $validator->validated();
         $totalAmount = 0;
         $userId = auth()->id(); 
+        
+        // <-- BARU: Log upaya pembuatan pesanan sebelum transaksi dimulai
+        Log::info('Order Creation Attempt', ['user_id' => $userId, 'payload' => $validated]);
+
 
         try {
             $order = DB::transaction(function () use ($validated, $userId, &$totalAmount) {
@@ -98,6 +103,7 @@ class OrderController extends Controller
                     $furniture = $furnitures->get($item['furniture_id']);
 
                     if (!$furniture) {
+                        // Ini akan membatalkan transaksi dan dilempar ke catch di bawah
                         throw new \Exception("Furnitur dengan ID {$item['furniture_id']} tidak ditemukan.");
                     }
 
@@ -133,11 +139,16 @@ class OrderController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            \Log::error('Order creation failed: ' . $e->getMessage());
+            // <-- PERBAIKAN: Gunakan Log Facade yang sudah di-import, tambahkan trace
+            Log::error('Order creation failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $userId,
+                'payload' => $validated,
+            ]);
             
             return response()->json([
                 'message' => 'Gagal membuat pesanan. Silakan coba lagi.',
-                'error_detail' => $e->getMessage()
+                'error_detail' => $e->getMessage() // Detail error untuk debugging
             ], 500);
         }
     }
