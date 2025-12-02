@@ -5,67 +5,69 @@ use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\FurnitureController; 
-use App\Http\Controllers\Admin\OrderController as AdminOrderController; // <-- BARU: Import Order Controller
+use App\Http\Controllers\Admin\FurnitureController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 
 // Halaman Login Admin
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
 
-// Semua route di bawah ini hanya bisa diakses admin yang sudah login
-Route::middleware(['admin'])->group(function () {
+// Semua route Admin di bawah ini, DENGAN prefix 'admin' dan middleware 'admin'
+Route::middleware(['admin'])->prefix('admin')->group(function () {
 
-    // Dashboard Admin
-    Route::get('/admin/dashboard', function () {
+    // Dashboard Admin (Path hanya '/')
+    Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('admin.dashboard');
 
     // =====================================================
-    // Furniture Management (SUDAH DIPERBAIKI)
+    // Furniture Management (URIs menjadi lebih sederhana)
     // =====================================================
-    Route::prefix('/admin/furnitures')->name('admin.furnitures.')->group(function () { 
-        
-        // Halaman Index (Hanya mengembalikan view, seperti yang Anda inginkan)
+    Route::prefix('furnitures')->name('admin.furnitures.')->group(function () {
+
+        // Halaman Index (URL: /admin/furnitures)
         Route::get('/', function () {
             return view('admin.furniture.index');
         })->name('index'); // admin.furnitures.index
 
-        // ENDPOINT AJAX UNTUK MENGAMBIL DATA LIST (KRITIS)
+        // ENDPOINT AJAX UNTUK MENGAMBIL DATA LIST (URL: /admin/furnitures/list)
         Route::get('/list', [FurnitureController::class, 'index'])->name('list'); // admin.furnitures.list
     });
 
     // =====================================================
-    // Order Management (PESANAN) <-- BARU DITAMBAHKAN
+    // Order Management (PESANAN) <-- MENGGUNAKAN resource
     // =====================================================
-    // Memperbaiki 404: Menggunakan path eksplisit 'admin/orders'
-    Route::resource('admin/orders', AdminOrderController::class)->only(['index', 'show'])->names([
+    // URL: /admin/orders dan /admin/orders/{order}
+    Route::resource('orders', AdminOrderController::class)->only(['index', 'show'])->names([
         'index' => 'admin.orders.index',
         'show' => 'admin.orders.show',
     ]);
-    
-    // User Management
-    Route::prefix('/admin/users')->name('admin.users.')->group(function () {
 
-        // Halaman user
+    // =====================================================
+    // User Management (URIs menjadi lebih sederhana)
+    // =====================================================
+    Route::prefix('users')->name('admin.users.')->group(function () {
+
+        // Halaman user (URL: /admin/users)
         Route::get('/', function () {
             return view('admin.users.index');
         })->name('index');
 
-        // Ajax list user
+        // Ajax list user (URL: /admin/users/list)
         Route::get('/list', [UserController::class, 'index'])->name('list');
 
-        // Detail user
+        // Detail user (URL: /admin/users/{id})
         Route::get('/{id}', [UserController::class, 'show'])->name('show');
 
-        // Update user
+        // Update user (URL: /admin/users/{id})
         Route::post('/{id}', [UserController::class, 'update'])->name('update');
 
-        // Delete user
+        // Delete user (URL: /admin/users/{id})
         Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
     });
 
     // Logout Admin
-    Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 });
 
 
@@ -81,7 +83,7 @@ Route::get('/storage/{filename}', function ($filename) {
     if (file_exists($path)) {
         return response()->file($path);
     }
-    
+
     // 2. Cek di dalam sub-folder furniture (misalnya 'furniture/YxXVfyIfWE.jpg')
     // Asumsi path database Anda menyimpan 'furniture/namafile.jpg'
     if (strpos($filename, 'furniture/') === 0) {
@@ -90,7 +92,7 @@ Route::get('/storage/{filename}', function ($filename) {
             return response()->file($subPath);
         }
     }
-    
+
     // Jika file tidak ditemukan, kembalikan 404
     abort(404);
 
